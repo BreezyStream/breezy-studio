@@ -1,0 +1,35 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "preserve",
+		"rootDir": "./src",
+		"outDir": "./dist",
+		"esModuleInterop": true,
+		"moduleDetection": "force",
+		"moduleResolution": "node",
+		"strict": true,
+		"skipLibCheck": true,
+		"ignoreDeprecations": "6.0",
+		"baseUrl": "./src",
+		"types": [
+			"node",
+			"electron"
+		],
+		"paths": {
+			"libs/*": [
+				"libs/*"
+			],
+			"graphql/*": [
+				"graphql/*"
+			]
+		}
+	},
+	"include": [
+		"src",
+		"src/bridge.d.ts"
+	],
+	"tsc-alias": {
+		"resolveFullPaths": true,
+		"verbose": false
+	}
+}

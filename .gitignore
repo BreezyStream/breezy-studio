@@ -1,0 +1,7 @@
+/python
+/node_modules
+/dist
+/release
+/tensorflow/models
+.DS_Store
+/.claude

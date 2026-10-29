@@ -1,0 +1,145 @@
+#===============================================================================
+# Fragments
+#===============================================================================
+
+#
+# @fragment ObjectClassificationModelData
+# @since 1.0.0
+#
+
+fragment ObjectClassificationModelData on MyObjectClassificationModel {
+	id
+	title
+	infos
+	theme
+	usage
+	likes
+	labelCount
+	imageCount
+	createdAt
+	updatedAt
+	image { id url }
+	picto { id url }
+	version { id label }
+	latestCompletedTraining { id }
+	latestPublishedTraining { id }
+}
+
+#
+# @fragment ObjectClassificationModelLabelData
+# @since 1.0.0
+#
+
+fragment ObjectClassificationModelLabelData on MyObjectClassificationModelLabel {
+	id
+	name
+	title
+	infos
+	color
+	createdAt
+	updatedAt
+	annotationCount
+}
+
+#
+# @fragment ObjectClassificationModelImageData
+# @since 1.0.0
+#
+
+fragment ObjectClassificationModelImageData on MyObjectClassificationModelImage {
+
+	id
+	url
+	size { w h }
+	title
+	infos
+	filename
+	filesize
+	mimetype
+	createdAt
+	updatedAt
+	annotationCount
+
+	annotations {
+		...ObjectClassificationModelAnnotationData
+	}
+}
+
+#
+# @fragment ObjectClassificationModelAnnotationData
+# @since 1.0.0
+#
+
+fragment ObjectClassificationModelAnnotationData on MyObjectClassificationModelAnnotation {
+
+	id
+	status
+	createdAt
+	updatedAt
+
+	label {
+		id
+		name
+		title
+		infos
+		color
+		createdAt
+		updatedAt
+	}
+}
+
+#
+# @mutation DeleteMyObjectClassificationModelTrainingMutation
+# @since 1.0.0
+#
+
+mutation DeleteMyObjectClassificationModelTrainingMutation($input: DeleteMyObjectClassificationModelTrainingInput!) {
+	deleteMyObjectClassificationModelTraining(input: $input)
+}
+
+#===============================================================================
+# Queries
+#===============================================================================
+
+#
+# @query MyObjectClassificationModelLabelCollectionQuery
+# @since 1.0.0
+#
+
+query MyObjectClassificationModelLabelCollectionQuery($input: MyObjectClassificationModelLabelCollectionInput!) {
+	myObjectClassificationModelLabelCollection(input: $input) {
+		total
+		items {
+			...ObjectClassificationModelLabelData
+		}
+	}
+}
+
+#
+# @query MyObjectClassificationModelImageCollectionQuery
+# @since 1.0.0
+#
+
+query MyObjectClassificationModelImageCollectionQuery($input: MyObjectClassificationModelImageCollectionInput!) {
+	myObjectClassificationModelImageCollection(input: $input) {
+		total
+		items {
+			...ObjectClassificationModelImageData
+		}
+	}
+}
+
+#===============================================================================
+# Mutations
+#===============================================================================
+
+#
+# @mutation CreateMyObjectClassificationModelTraining
+# @since 1.0.0
+#
+
+mutation CreateMyObjectClassificationModelTraining($input: CreateMyObjectClassificationModelTrainingInput!) {
+	createMyObjectClassificationModelTraining(input: $input) {
+		id
+	}
+}

@@ -1,0 +1,4 @@
+# Object classification only (MobileNetV2 transfer learning + TFLite export).
+# numpy and h5py are installed from conda-forge, see create-env-mac.sh.
+tensorflow-macos==2.11.0
+tensorflow-metal==0.7.0
