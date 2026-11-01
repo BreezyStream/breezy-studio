@@ -59,7 +59,7 @@ export type CreateMyModelInput = {
   imageId?: InputMaybe<Scalars['ID']['input']>;
   infos: Scalars['String']['input'];
   pictoId?: InputMaybe<Scalars['ID']['input']>;
-  theme?: InputMaybe<Scalars['String']['input']>;
+  color?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
   type: Scalars['String']['input'];
 };
@@ -154,9 +154,8 @@ export type CreateMyWidgetInput = {
   size?: InputMaybe<CreateMyOwnWidgetSizeInput>;
   summary?: InputMaybe<Scalars['String']['input']>;
   templateId?: InputMaybe<Scalars['ID']['input']>;
-  theme?: InputMaybe<Scalars['String']['input']>;
+  color?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
-  widgetId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateMyWidgetModelInput = {
@@ -1227,7 +1226,7 @@ export type MyObjectClassificationModel = {
   stability: Scalars['Float']['output'];
   stats: MyObjectClassificationModelStats;
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   threshold: Scalars['Float']['output'];
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
@@ -1542,7 +1541,7 @@ export type MyObjectDetectionModel = {
   likes: Scalars['Int']['output'];
   picto?: Maybe<Media>;
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
   usage: Scalars['Int']['output'];
@@ -1790,7 +1789,7 @@ export type MyWidget = {
   size: Size;
   summary: Scalars['String']['output'];
   template: Scalars['Boolean']['output'];
-  theme: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   title: Scalars['String']['output'];
   tutorial: Scalars['Boolean']['output'];
   updatedAt: Scalars['Timestamp']['output'];
@@ -2264,7 +2263,7 @@ export type ObjectClassificationModel = {
   picto?: Maybe<Media>;
   stability: Scalars['Float']['output'];
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   threshold: Scalars['Float']['output'];
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
@@ -2351,7 +2350,7 @@ export type ObjectClassificationModelSnapshot = {
   specs: ObjectClassificationModelSnapshotSpecs;
   stability: Scalars['Float']['output'];
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   threshold: Scalars['Float']['output'];
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
@@ -2424,7 +2423,7 @@ export type ObjectDetectionModel = {
   likes: Scalars['Int']['output'];
   picto?: Maybe<Media>;
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
   usage: Scalars['Int']['output'];
@@ -2442,7 +2441,7 @@ export type ObjectDetectionModelSnapshot = {
   model: ObjectClassificationModel;
   picto?: Maybe<Media>;
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
   user: User;
@@ -3213,7 +3212,7 @@ export type UpdateMyObjectClassificationModelInput = {
   pictoId?: InputMaybe<Scalars['ID']['input']>;
   stability?: InputMaybe<Scalars['Float']['input']>;
   summary?: InputMaybe<Scalars['String']['input']>;
-  theme?: InputMaybe<Scalars['String']['input']>;
+  color?: InputMaybe<Scalars['String']['input']>;
   threshold?: InputMaybe<Scalars['Float']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3333,7 +3332,7 @@ export type UpdateMyWidgetInput = {
   preview?: InputMaybe<Scalars['Boolean']['input']>;
   size?: InputMaybe<UpdateMyOwnWidgetSizeInput>;
   summary?: InputMaybe<Scalars['String']['input']>;
-  theme?: InputMaybe<Scalars['String']['input']>;
+  color?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
   widgetId: Scalars['ID']['input'];
 };
@@ -3361,7 +3360,6 @@ export type UpdateMyWidgetResourcesInput = {
 export type UpdateMyWidgetVersionInput = {
   infos?: InputMaybe<Scalars['String']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
-  theme?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
   widgetVersionId: Scalars['ID']['input'];
 };
@@ -3398,7 +3396,7 @@ export type Widget = {
   preview: Scalars['Boolean']['output'];
   size: Size;
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
   usage: Scalars['Int']['output'];
@@ -3605,7 +3603,7 @@ export type WidgetSnapshot = {
   preview: Scalars['Boolean']['output'];
   size: Size;
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
   usage: Scalars['Int']['output'];

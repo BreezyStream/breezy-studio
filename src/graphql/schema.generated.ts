@@ -22,9 +22,129 @@ export type AcceptMyWidgetInvitationInput = {
   widgetInvitationId: Scalars['ID']['input'];
 };
 
+export type AppRelease = {
+  __typename?: 'AppRelease';
+  arch: Scalars['String']['output'];
+  createdAt: Scalars['Timestamp']['output'];
+  id: Scalars['ID']['output'];
+  platform: Scalars['String']['output'];
+  product: Scalars['String']['output'];
+  size: Scalars['Float']['output'];
+  updatedAt: Scalars['Timestamp']['output'];
+  url: Scalars['String']['output'];
+  version: Scalars['String']['output'];
+};
+
+export type AppReleaseList = {
+  __typename?: 'AppReleaseList';
+  items: Array<AppRelease>;
+  total: Scalars['Int']['output'];
+};
+
+export type AssistantAction = {
+  __typename?: 'AssistantAction';
+  error?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  input: Scalars['Object']['output'];
+  output?: Maybe<Scalars['Object']['output']>;
+  tool: Scalars['String']['output'];
+};
+
+export type AssistantActionResultEvent = {
+  __typename?: 'AssistantActionResultEvent';
+  error?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  input: Scalars['Object']['output'];
+  output?: Maybe<Scalars['Object']['output']>;
+  tool: Scalars['String']['output'];
+};
+
+export type AssistantActionStartEvent = {
+  __typename?: 'AssistantActionStartEvent';
+  id: Scalars['String']['output'];
+  input: Scalars['Object']['output'];
+  tool: Scalars['String']['output'];
+};
+
+export type AssistantCreditPack = {
+  __typename?: 'AssistantCreditPack';
+  createdAt: Scalars['Timestamp']['output'];
+  credits: Scalars['Int']['output'];
+  id: Scalars['ID']['output'];
+  index: Scalars['Int']['output'];
+  infos: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  price: Scalars['Int']['output'];
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['Timestamp']['output'];
+};
+
+export type AssistantCreditPackList = {
+  __typename?: 'AssistantCreditPackList';
+  items: Array<AssistantCreditPack>;
+  total: Scalars['Int']['output'];
+};
+
+export type AssistantCreditPackListInput = {
+  after?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  order?: InputMaybe<Array<ListOrderInput>>;
+  query?: InputMaybe<Array<ListQueryInput>>;
+};
+
+export type AssistantDeltaEvent = {
+  __typename?: 'AssistantDeltaEvent';
+  text: Scalars['String']['output'];
+};
+
+export type AssistantDoneEvent = {
+  __typename?: 'AssistantDoneEvent';
+  actions: Array<AssistantAction>;
+  content: Scalars['String']['output'];
+  limited: Scalars['Boolean']['output'];
+  truncated: Scalars['Boolean']['output'];
+};
+
+export type AssistantEvent = AssistantActionResultEvent | AssistantActionStartEvent | AssistantDeltaEvent | AssistantDoneEvent | AssistantThinkingEvent;
+
+export type AssistantHistoryEntryInput = {
+  content: Scalars['String']['input'];
+  role: Scalars['String']['input'];
+};
+
+export type AssistantThinkingEvent = {
+  __typename?: 'AssistantThinkingEvent';
+  text: Scalars['String']['output'];
+};
+
 export type BundleMyWidgetInput = {
   client?: InputMaybe<Scalars['String']['input']>;
   widgetId: Scalars['ID']['input'];
+};
+
+export type ClaudeModel = {
+  __typename?: 'ClaudeModel';
+  createdAt: Scalars['Timestamp']['output'];
+  id: Scalars['ID']['output'];
+  index: Scalars['Int']['output'];
+  infos: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  primary: Scalars['Boolean']['output'];
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['Timestamp']['output'];
+};
+
+export type ClaudeModelList = {
+  __typename?: 'ClaudeModelList';
+  items: Array<ClaudeModel>;
+  total: Scalars['Int']['output'];
+};
+
+export type ClaudeModelListInput = {
+  after?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  order?: InputMaybe<Array<ListOrderInput>>;
+  query?: InputMaybe<Array<ListQueryInput>>;
 };
 
 export type CollectionOrderInput = {
@@ -56,10 +176,11 @@ export type CreateMyMediasInput = {
 
 export type CreateMyModelInput = {
   categoryId?: InputMaybe<Scalars['ID']['input']>;
+  color?: InputMaybe<Scalars['String']['input']>;
+  glyph?: InputMaybe<Scalars['String']['input']>;
   imageId?: InputMaybe<Scalars['ID']['input']>;
   infos: Scalars['String']['input'];
   pictoId?: InputMaybe<Scalars['ID']['input']>;
-  theme?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
   type: Scalars['String']['input'];
 };
@@ -144,9 +265,11 @@ export type CreateMyWidgetFieldInput = {
 
 export type CreateMyWidgetInput = {
   categoryId?: InputMaybe<Scalars['ID']['input']>;
+  color?: InputMaybe<Scalars['String']['input']>;
   details?: InputMaybe<Scalars['String']['input']>;
   externals?: InputMaybe<Array<MyWidgetExternalInput>>;
   gameIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  glyph?: InputMaybe<Scalars['String']['input']>;
   imageId?: InputMaybe<Scalars['ID']['input']>;
   infos: Scalars['String']['input'];
   language: Scalars['String']['input'];
@@ -154,9 +277,7 @@ export type CreateMyWidgetInput = {
   size?: InputMaybe<CreateMyOwnWidgetSizeInput>;
   summary?: InputMaybe<Scalars['String']['input']>;
   templateId?: InputMaybe<Scalars['ID']['input']>;
-  theme?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
-  widgetId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateMyWidgetModelInput = {
@@ -309,11 +430,6 @@ export type GameSelectionInput = {
   selection: Array<Scalars['ID']['input']>;
 };
 
-export type InsertMyOverlayModelInput = {
-  modelId: Scalars['ID']['input'];
-  overlayId: Scalars['ID']['input'];
-};
-
 export type InsertMyOverlayWidgetInput = {
   overlayId: Scalars['ID']['input'];
   widgetId: Scalars['ID']['input'];
@@ -359,6 +475,10 @@ export type LanguageListInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   order?: InputMaybe<Array<ListOrderInput>>;
   query?: InputMaybe<Array<ListQueryInput>>;
+};
+
+export type LatestAppReleaseListInput = {
+  product?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type LeaveMyModelInput = {
@@ -454,6 +574,13 @@ export type MediasInput = {
 };
 
 export type Model = ObjectClassificationModel | ObjectDetectionModel;
+
+export enum ModelAccessRole {
+  Editor = 'EDITOR',
+  Owner = 'OWNER',
+  User = 'USER',
+  Viewer = 'VIEWER'
+}
 
 export enum ModelAccessScope {
   All = 'ALL',
@@ -556,13 +683,6 @@ export enum ModelMemberStatus {
 
 export type ModelResult = MyObjectClassificationModel | MyObjectDetectionModel | ObjectClassificationModel | ObjectDetectionModel;
 
-export enum ModelAccessRole {
-  Editor = 'EDITOR',
-  Owner = 'OWNER',
-  User = 'USER',
-  Viewer = 'VIEWER'
-}
-
 export type ModelSnapshot = ObjectClassificationModelSnapshot | ObjectDetectionModelSnapshot;
 
 export enum ModelType {
@@ -627,7 +747,6 @@ export type Mutation = {
   deleteMyWidgetResource: Scalars['Boolean']['output'];
   deleteMyWidgetVersion: Scalars['Boolean']['output'];
   disconnectMyClaudeAccount: Scalars['Boolean']['output'];
-  insertMyOverlayModel: MyOverlayModel;
   insertMyOverlayWidget: MyOverlayWidget;
   inviteMyModelMember: MyModelMember;
   inviteMyWidgetMember: MyWidgetMember;
@@ -638,11 +757,9 @@ export type Mutation = {
   refreshMyTwitchAccessToken?: Maybe<MyTwitchAccessToken>;
   refreshOverlayTwitchAccessToken?: Maybe<MyTwitchAccessToken>;
   regenerateMyOverlayToken: MyOverlay;
-  removeMyOverlayModel: Scalars['Boolean']['output'];
   removeMyOverlayWidget: Scalars['Boolean']['output'];
   resetUserPassword: Scalars['Boolean']['output'];
   revokeMyTwitchAccessToken?: Maybe<MyTwitchAccessToken>;
-  selectMyOverlayModelVersion: MyOverlayModel;
   selectMyOverlayWidgetVersion: MyOverlayWidget;
   selectMyWidgetModelVersion: MyWidgetModel;
   signInUser: Session;
@@ -651,7 +768,7 @@ export type Mutation = {
   signUpUser: Scalars['Boolean']['output'];
   toggleModelLike: Model;
   toggleWidgetLike: Widget;
-  updateMyClaudeAccount: MyClaudeAccount;
+  updateMyAssistantSettings: MyAssistantSettings;
   updateMyMedia: MyMedia;
   updateMyModelMember: MyModelMember;
   updateMyObjectClassificationModel: MyObjectClassificationModel;
@@ -849,11 +966,6 @@ export type MutationDeleteMyWidgetVersionArgs = {
 };
 
 
-export type MutationInsertMyOverlayModelArgs = {
-  input: InsertMyOverlayModelInput;
-};
-
-
 export type MutationInsertMyOverlayWidgetArgs = {
   input: InsertMyOverlayWidgetInput;
 };
@@ -904,11 +1016,6 @@ export type MutationRegenerateMyOverlayTokenArgs = {
 };
 
 
-export type MutationRemoveMyOverlayModelArgs = {
-  input: RemoveMyOverlayModelInput;
-};
-
-
 export type MutationRemoveMyOverlayWidgetArgs = {
   input: RemoveMyOverlayWidgetInput;
 };
@@ -921,11 +1028,6 @@ export type MutationResetUserPasswordArgs = {
 
 export type MutationRevokeMyTwitchAccessTokenArgs = {
   input: RevokeMyTwitchAccessTokenInput;
-};
-
-
-export type MutationSelectMyOverlayModelVersionArgs = {
-  input: SelectMyOverlayModelVersionInput;
 };
 
 
@@ -964,8 +1066,8 @@ export type MutationToggleWidgetLikeArgs = {
 };
 
 
-export type MutationUpdateMyClaudeAccountArgs = {
-  input: UpdateMyClaudeAccountInput;
+export type MutationUpdateMyAssistantSettingsArgs = {
+  input: UpdateMyAssistantSettingsInput;
 };
 
 
@@ -1063,14 +1165,18 @@ export type MutationVerifyUserArgs = {
   input?: InputMaybe<VerifyUserInput>;
 };
 
+export type MyAssistantSettings = {
+  __typename?: 'MyAssistantSettings';
+  effort: Scalars['String']['output'];
+  model?: Maybe<ClaudeModel>;
+};
+
 export type MyClaudeAccount = {
   __typename?: 'MyClaudeAccount';
   apiKeyPreview: Scalars['String']['output'];
   connectedAt: Scalars['Timestamp']['output'];
   createdAt: Scalars['Timestamp']['output'];
-  effort?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  model?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['Timestamp']['output'];
 };
 
@@ -1205,9 +1311,11 @@ export type MyObjectClassificationModel = {
   __typename?: 'MyObjectClassificationModel';
   annotationCount: Scalars['Int']['output'];
   category?: Maybe<ModelCategory>;
+  color?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Timestamp']['output'];
   details: Scalars['String']['output'];
   games: Array<Game>;
+  glyph?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   image?: Maybe<Media>;
   imageCount: Scalars['Int']['output'];
@@ -1227,7 +1335,6 @@ export type MyObjectClassificationModel = {
   stability: Scalars['Float']['output'];
   stats: MyObjectClassificationModelStats;
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
   threshold: Scalars['Float']['output'];
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
@@ -1534,15 +1641,16 @@ export type MyObjectClassificationModelVersionInput = {
 
 export type MyObjectDetectionModel = {
   __typename?: 'MyObjectDetectionModel';
+  color?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Timestamp']['output'];
   details: Scalars['String']['output'];
+  glyph?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   image?: Maybe<Media>;
   infos: Scalars['String']['output'];
   likes: Scalars['Int']['output'];
   picto?: Maybe<Media>;
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
   usage: Scalars['Int']['output'];
@@ -1556,7 +1664,6 @@ export type MyOverlay = {
   id: Scalars['ID']['output'];
   image?: Maybe<Media>;
   infos: Scalars['String']['output'];
-  models: Array<MyOverlayModel>;
   picto?: Maybe<Media>;
   size: Size;
   theme: Scalars['String']['output'];
@@ -1587,14 +1694,6 @@ export type MyOverlayInput = {
   overlayId: Scalars['ID']['input'];
 };
 
-export type MyOverlayModel = {
-  __typename?: 'MyOverlayModel';
-  createdAt: Scalars['Timestamp']['output'];
-  id: Scalars['ID']['output'];
-  model: ModelSnapshot;
-  updatedAt: Scalars['Timestamp']['output'];
-};
-
 export type MyOverlayWidget = {
   __typename?: 'MyOverlayWidget';
   active: Scalars['Boolean']['output'];
@@ -1623,24 +1722,10 @@ export type MyOverlayWidgetUpdate = {
   version: WidgetVersion;
 };
 
-export type MyOverlayWidgetUpdateList = {
-  __typename?: 'MyOverlayWidgetUpdateList';
-  after?: Maybe<Scalars['Int']['output']>;
-  items: Array<MyOverlayWidgetUpdate>;
-  limit?: Maybe<Scalars['Int']['output']>;
-  total: Scalars['Int']['output'];
-};
-
-export type MyOverlayWidgetUpdateListInput = {
-  after?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
 export type MyPlan = {
   __typename?: 'MyPlan';
   createdAt: Scalars['Timestamp']['output'];
   expiresDate?: Maybe<Scalars['Timestamp']['output']>;
-  features: Array<PlanFeature>;
   id: Scalars['ID']['output'];
   infos: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -1649,7 +1734,6 @@ export type MyPlan = {
   startedDate?: Maybe<Scalars['Timestamp']['output']>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
-  values: Array<PlanValue>;
 };
 
 export type MyTwitchAccessToken = {
@@ -1665,6 +1749,21 @@ export type MyTwitchAccessToken = {
   state?: Maybe<Scalars['Object']['output']>;
   updatedAt: Scalars['Timestamp']['output'];
   updatedDate?: Maybe<Scalars['Timestamp']['output']>;
+};
+
+export type MyUpdate = MyOverlayWidgetUpdate | MyWidgetModelUpdate;
+
+export type MyUpdateList = {
+  __typename?: 'MyUpdateList';
+  after?: Maybe<Scalars['Int']['output']>;
+  items: Array<MyUpdate>;
+  limit?: Maybe<Scalars['Int']['output']>;
+  total: Scalars['Int']['output'];
+};
+
+export type MyUpdateListInput = {
+  after?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type MyUser = {
@@ -1692,12 +1791,17 @@ export type MyUser = {
 
 export type MyUserAssistantUsage = {
   __typename?: 'MyUserAssistantUsage';
-  dailyQuota: Scalars['Float']['output'];
-  dailyUsage: Scalars['Float']['output'];
+  creditBalance: Scalars['Int']['output'];
+  creditQuota: Scalars['Float']['output'];
+  creditUsage: Scalars['Float']['output'];
+  dailyPlanQuota: Scalars['Float']['output'];
+  dailyPlanUsage: Scalars['Float']['output'];
   expiresDate: Scalars['Timestamp']['output'];
-  quota: Scalars['Float']['output'];
+  monthlyPlanQuota: Scalars['Float']['output'];
+  monthlyPlanUsage: Scalars['Float']['output'];
   startedDate: Scalars['Timestamp']['output'];
-  usage: Scalars['Float']['output'];
+  weeklyPlanQuota: Scalars['Float']['output'];
+  weeklyPlanUsage: Scalars['Float']['output'];
 };
 
 export type MyUserEditorSettings = {
@@ -1770,11 +1874,13 @@ export type MyWidget = {
   __typename?: 'MyWidget';
   assets: Array<MyWidgetAsset>;
   category?: Maybe<WidgetCategory>;
+  color?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Timestamp']['output'];
   details: Scalars['String']['output'];
   externals: Array<MyWidgetExternal>;
   fields: Array<MyWidgetField>;
   games: Array<Game>;
+  glyph?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   image?: Maybe<Media>;
   infos: Scalars['String']['output'];
@@ -1790,7 +1896,6 @@ export type MyWidget = {
   size: Size;
   summary: Scalars['String']['output'];
   template: Scalars['Boolean']['output'];
-  theme: Scalars['String']['output'];
   title: Scalars['String']['output'];
   tutorial: Scalars['Boolean']['output'];
   updatedAt: Scalars['Timestamp']['output'];
@@ -1807,56 +1912,6 @@ export type MyWidgetAsset = {
   name: Scalars['String']['output'];
   type: WidgetAssetType;
   updatedAt: Scalars['Timestamp']['output'];
-};
-
-export type MyWidgetAssistantAction = {
-  __typename?: 'MyWidgetAssistantAction';
-  error?: Maybe<Scalars['String']['output']>;
-  id: Scalars['String']['output'];
-  input: Scalars['Object']['output'];
-  output?: Maybe<Scalars['Object']['output']>;
-  tool: Scalars['String']['output'];
-};
-
-export type MyWidgetAssistantActionResultEvent = {
-  __typename?: 'MyWidgetAssistantActionResultEvent';
-  error?: Maybe<Scalars['String']['output']>;
-  id: Scalars['String']['output'];
-  input: Scalars['Object']['output'];
-  output?: Maybe<Scalars['Object']['output']>;
-  tool: Scalars['String']['output'];
-};
-
-export type MyWidgetAssistantActionStartEvent = {
-  __typename?: 'MyWidgetAssistantActionStartEvent';
-  id: Scalars['String']['output'];
-  input: Scalars['Object']['output'];
-  tool: Scalars['String']['output'];
-};
-
-export type MyWidgetAssistantDeltaEvent = {
-  __typename?: 'MyWidgetAssistantDeltaEvent';
-  text: Scalars['String']['output'];
-};
-
-export type MyWidgetAssistantDoneEvent = {
-  __typename?: 'MyWidgetAssistantDoneEvent';
-  actions: Array<MyWidgetAssistantAction>;
-  content: Scalars['String']['output'];
-  limited: Scalars['Boolean']['output'];
-  truncated: Scalars['Boolean']['output'];
-};
-
-export type MyWidgetAssistantEvent = MyWidgetAssistantActionResultEvent | MyWidgetAssistantActionStartEvent | MyWidgetAssistantDeltaEvent | MyWidgetAssistantDoneEvent | MyWidgetAssistantThinkingEvent;
-
-export type MyWidgetAssistantHistoryEntryInput = {
-  content: Scalars['String']['input'];
-  role: Scalars['String']['input'];
-};
-
-export type MyWidgetAssistantThinkingEvent = {
-  __typename?: 'MyWidgetAssistantThinkingEvent';
-  text: Scalars['String']['output'];
 };
 
 export type MyWidgetCollection = {
@@ -1879,9 +1934,19 @@ export type MyWidgetCollectionInput = {
 export type MyWidgetEvent = {
   __typename?: 'MyWidgetEvent';
   client?: Maybe<Scalars['String']['output']>;
-  revision?: Maybe<Scalars['Int']['output']>;
+  resource?: Maybe<MyWidgetEventResource>;
+  revision?: Maybe<MyWidgetEventRevision>;
   type: MyWidgetEventType;
-  widgetResourceId?: Maybe<Scalars['ID']['output']>;
+};
+
+export type MyWidgetEventResource = {
+  __typename?: 'MyWidgetEventResource';
+  id: Scalars['ID']['output'];
+};
+
+export type MyWidgetEventRevision = {
+  __typename?: 'MyWidgetEventRevision';
+  number: Scalars['Int']['output'];
 };
 
 export enum MyWidgetEventType {
@@ -2160,19 +2225,6 @@ export type MyWidgetModelUpdate = {
   widgetModel: MyWidgetModel;
 };
 
-export type MyWidgetModelUpdateList = {
-  __typename?: 'MyWidgetModelUpdateList';
-  after?: Maybe<Scalars['Int']['output']>;
-  items: Array<MyWidgetModelUpdate>;
-  limit?: Maybe<Scalars['Int']['output']>;
-  total: Scalars['Int']['output'];
-};
-
-export type MyWidgetModelUpdateListInput = {
-  after?: InputMaybe<Scalars['Int']['input']>;
-  limit?: InputMaybe<Scalars['Int']['input']>;
-};
-
 export type MyWidgetResource = {
   __typename?: 'MyWidgetResource';
   createdAt: Scalars['Timestamp']['output'];
@@ -2252,9 +2304,11 @@ export type MyWidgetVersionInput = {
 export type ObjectClassificationModel = {
   __typename?: 'ObjectClassificationModel';
   category?: Maybe<ModelCategory>;
+  color?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Timestamp']['output'];
   details: Scalars['String']['output'];
   games: Array<Game>;
+  glyph?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   image?: Maybe<Media>;
   inferenceRate: Scalars['Float']['output'];
@@ -2264,7 +2318,6 @@ export type ObjectClassificationModel = {
   picto?: Maybe<Media>;
   stability: Scalars['Float']['output'];
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
   threshold: Scalars['Float']['output'];
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
@@ -2337,9 +2390,11 @@ export type ObjectClassificationModelLabel = {
 
 export type ObjectClassificationModelSnapshot = {
   __typename?: 'ObjectClassificationModelSnapshot';
+  color?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Timestamp']['output'];
   details: Scalars['String']['output'];
   files: Array<ObjectClassificationModelFile>;
+  glyph?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   image?: Maybe<Media>;
   images: Array<ObjectClassificationModelImage>;
@@ -2351,7 +2406,6 @@ export type ObjectClassificationModelSnapshot = {
   specs: ObjectClassificationModelSnapshotSpecs;
   stability: Scalars['Float']['output'];
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
   threshold: Scalars['Float']['output'];
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
@@ -2416,15 +2470,16 @@ export type ObjectClassificationModelVersionMetrics = {
 
 export type ObjectDetectionModel = {
   __typename?: 'ObjectDetectionModel';
+  color?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Timestamp']['output'];
   details: Scalars['String']['output'];
+  glyph?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   image?: Maybe<Media>;
   infos: Scalars['String']['output'];
   likes: Scalars['Int']['output'];
   picto?: Maybe<Media>;
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
   usage: Scalars['Int']['output'];
@@ -2433,8 +2488,10 @@ export type ObjectDetectionModel = {
 
 export type ObjectDetectionModelSnapshot = {
   __typename?: 'ObjectDetectionModelSnapshot';
+  color?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Timestamp']['output'];
   details: Scalars['String']['output'];
+  glyph?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   image?: Maybe<Media>;
   inferenceRate: Scalars['Float']['output'];
@@ -2442,7 +2499,6 @@ export type ObjectDetectionModelSnapshot = {
   model: ObjectClassificationModel;
   picto?: Maybe<Media>;
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
   user: User;
@@ -2469,7 +2525,6 @@ export type Overlay = {
   id: Scalars['ID']['output'];
   image?: Maybe<Media>;
   infos: Scalars['String']['output'];
-  models: Array<OverlayModel>;
   picto?: Maybe<Media>;
   size: Size;
   theme: Scalars['String']['output'];
@@ -2482,14 +2537,6 @@ export type Overlay = {
 
 export type OverlayInput = {
   token: Scalars['String']['input'];
-};
-
-export type OverlayModel = {
-  __typename?: 'OverlayModel';
-  createdAt: Scalars['Timestamp']['output'];
-  id: Scalars['ID']['output'];
-  model: Model;
-  updatedAt: Scalars['Timestamp']['output'];
 };
 
 export type OverlayWidget = {
@@ -2511,7 +2558,6 @@ export type OverlayWidget = {
 export type Plan = {
   __typename?: 'Plan';
   createdAt: Scalars['Timestamp']['output'];
-  features: Array<PlanFeature>;
   id: Scalars['ID']['output'];
   infos: Scalars['String']['output'];
   name?: Maybe<Scalars['String']['output']>;
@@ -2519,7 +2565,6 @@ export type Plan = {
   quotas: Array<PlanQuota>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
-  values: Array<PlanValue>;
 };
 
 export type PlanCollection = {
@@ -2537,15 +2582,6 @@ export type PlanCollectionInput = {
   order?: InputMaybe<Array<CollectionOrderInput>>;
   query?: InputMaybe<Array<CollectionQueryInput>>;
   search?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type PlanFeature = {
-  __typename?: 'PlanFeature';
-  createdAt: Scalars['Timestamp']['output'];
-  id: Scalars['ID']['output'];
-  infos: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-  updatedAt: Scalars['Timestamp']['output'];
 };
 
 export type PlanInput = {
@@ -2574,17 +2610,6 @@ export type PlanQuota = {
   value: Scalars['Float']['output'];
 };
 
-export type PlanValue = {
-  __typename?: 'PlanValue';
-  createdAt: Scalars['Timestamp']['output'];
-  id: Scalars['ID']['output'];
-  infos: Scalars['String']['output'];
-  title: Scalars['String']['output'];
-  type: Scalars['String']['output'];
-  updatedAt: Scalars['Timestamp']['output'];
-  value: Scalars['Int']['output'];
-};
-
 export type Point = {
   __typename?: 'Point';
   x: Scalars['Float']['output'];
@@ -2598,11 +2623,14 @@ export type PointInput = {
 
 export type Query = {
   __typename?: 'Query';
+  assistantCreditPackList: AssistantCreditPackList;
+  claudeModelList: ClaudeModelList;
   game?: Maybe<Game>;
   gameCollection: GameCollection;
   gameSelection: GameSelection;
   language?: Maybe<Language>;
   languageList: LanguageList;
+  latestAppReleaseList: AppReleaseList;
   media?: Maybe<Media>;
   medias: Array<Media>;
   model?: Maybe<ModelResult>;
@@ -2610,6 +2638,7 @@ export type Query = {
   modelCategoryList: ModelCategoryList;
   modelCollection: ModelCollection;
   modelCollectionByCategory: ModelCollectionByCategory;
+  myAssistantSettings: MyAssistantSettings;
   myClaudeAccount?: Maybe<MyClaudeAccount>;
   myMedia?: Maybe<MyMedia>;
   myMediaCollection: MyMediaCollection;
@@ -2631,8 +2660,8 @@ export type Query = {
   myObjectClassificationModelVersionCollection: MyObjectClassificationModelVersionCollection;
   myOverlay?: Maybe<MyOverlay>;
   myOverlayCollection: MyOverlayCollection;
-  myOverlayWidgetUpdateList: MyOverlayWidgetUpdateList;
   myTwitchAccessToken?: Maybe<MyTwitchAccessToken>;
+  myUpdateList: MyUpdateList;
   myUser?: Maybe<MyUser>;
   myWidget?: Maybe<MyWidget>;
   myWidgetCollection: MyWidgetCollection;
@@ -2648,7 +2677,6 @@ export type Query = {
   myWidgetModel?: Maybe<MyWidgetModel>;
   myWidgetModelCollection: MyWidgetModelCollection;
   myWidgetModelList: MyWidgetModelList;
-  myWidgetModelUpdateList: MyWidgetModelUpdateList;
   myWidgetResourceList: MyWidgetResourceList;
   myWidgetVersion?: Maybe<MyWidgetVersion>;
   myWidgetVersionCollection: MyWidgetVersionCollection;
@@ -2666,6 +2694,16 @@ export type Query = {
   widgetCollectionByCategory: WidgetCollectionByCategory;
   widgetVersion?: Maybe<WidgetVersion>;
   widgetVersionCollection: WidgetVersionCollection;
+};
+
+
+export type QueryAssistantCreditPackListArgs = {
+  input: AssistantCreditPackListInput;
+};
+
+
+export type QueryClaudeModelListArgs = {
+  input: ClaudeModelListInput;
 };
 
 
@@ -2691,6 +2729,11 @@ export type QueryLanguageArgs = {
 
 export type QueryLanguageListArgs = {
   input: LanguageListInput;
+};
+
+
+export type QueryLatestAppReleaseListArgs = {
+  input?: InputMaybe<LatestAppReleaseListInput>;
 };
 
 
@@ -2829,8 +2872,8 @@ export type QueryMyOverlayCollectionArgs = {
 };
 
 
-export type QueryMyOverlayWidgetUpdateListArgs = {
-  input?: InputMaybe<MyOverlayWidgetUpdateListInput>;
+export type QueryMyUpdateListArgs = {
+  input?: InputMaybe<MyUpdateListInput>;
 };
 
 
@@ -2901,11 +2944,6 @@ export type QueryMyWidgetModelCollectionArgs = {
 
 export type QueryMyWidgetModelListArgs = {
   input: MyWidgetModelListInput;
-};
-
-
-export type QueryMyWidgetModelUpdateListArgs = {
-  input?: InputMaybe<MyWidgetModelUpdateListInput>;
 };
 
 
@@ -3010,10 +3048,6 @@ export type RegenerateMyOverlayTokenInput = {
   overlayId: Scalars['ID']['input'];
 };
 
-export type RemoveMyOverlayModelInput = {
-  id: Scalars['ID']['input'];
-};
-
 export type RemoveMyOverlayWidgetInput = {
   overlayWidgetId: Scalars['ID']['input'];
 };
@@ -3063,11 +3097,6 @@ export type SegmentInput = {
   relative?: InputMaybe<Scalars['ID']['input']>;
 };
 
-export type SelectMyOverlayModelVersionInput = {
-  id: Scalars['ID']['input'];
-  modelVersionId: Scalars['ID']['input'];
-};
-
 export type SelectMyOverlayWidgetVersionInput = {
   overlayWidgetId: Scalars['ID']['input'];
   widgetVersionId?: InputMaybe<Scalars['ID']['input']>;
@@ -3079,8 +3108,10 @@ export type SelectMyWidgetModelVersionInput = {
 };
 
 export type SendMyWidgetAssistantMessageInput = {
-  history?: InputMaybe<Array<MyWidgetAssistantHistoryEntryInput>>;
+  effort?: InputMaybe<Scalars['String']['input']>;
+  history?: InputMaybe<Array<AssistantHistoryEntryInput>>;
   message: Scalars['String']['input'];
+  model?: InputMaybe<Scalars['String']['input']>;
   widgetId: Scalars['ID']['input'];
 };
 
@@ -3104,6 +3135,7 @@ export type SignInUserInput = {
 export type SignInUserWithProviderInput = {
   captcha?: InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
+  invite?: InputMaybe<Scalars['String']['input']>;
   link?: InputMaybe<Scalars['String']['input']>;
   provider: Scalars['String']['input'];
 };
@@ -3112,8 +3144,9 @@ export type SignUpUserInput = {
   captcha?: InputMaybe<Scalars['String']['input']>;
   email: Scalars['String']['input'];
   firstname: Scalars['String']['input'];
+  invite?: InputMaybe<Scalars['String']['input']>;
   lastname: Scalars['String']['input'];
-  nickname?: InputMaybe<Scalars['String']['input']>;
+  nickname: Scalars['String']['input'];
   passw: Scalars['String']['input'];
   phone?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3150,7 +3183,7 @@ export enum StatsHistoryUnit {
 
 export type Subscription = {
   __typename?: 'Subscription';
-  streamMyWidgetAssistantMessage: MyWidgetAssistantEvent;
+  streamMyWidgetAssistantMessage: AssistantEvent;
   watchMyWidget: MyWidgetEvent;
 };
 
@@ -3172,7 +3205,7 @@ export type ToggleWidgetLikeInput = {
   id: Scalars['ID']['input'];
 };
 
-export type UpdateMyClaudeAccountInput = {
+export type UpdateMyAssistantSettingsInput = {
   effort?: InputMaybe<Scalars['String']['input']>;
   model?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3205,7 +3238,9 @@ export type UpdateMyObjectClassificationModelImagesInput = {
 
 export type UpdateMyObjectClassificationModelInput = {
   categoryId?: InputMaybe<Scalars['ID']['input']>;
+  color?: InputMaybe<Scalars['String']['input']>;
   details?: InputMaybe<Scalars['String']['input']>;
+  glyph?: InputMaybe<Scalars['String']['input']>;
   imageId?: InputMaybe<Scalars['ID']['input']>;
   inferenceRate?: InputMaybe<Scalars['Float']['input']>;
   infos?: InputMaybe<Scalars['String']['input']>;
@@ -3213,7 +3248,6 @@ export type UpdateMyObjectClassificationModelInput = {
   pictoId?: InputMaybe<Scalars['ID']['input']>;
   stability?: InputMaybe<Scalars['Float']['input']>;
   summary?: InputMaybe<Scalars['String']['input']>;
-  theme?: InputMaybe<Scalars['String']['input']>;
   threshold?: InputMaybe<Scalars['Float']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3323,9 +3357,11 @@ export type UpdateMyWidgetFieldInput = {
 
 export type UpdateMyWidgetInput = {
   categoryId?: InputMaybe<Scalars['ID']['input']>;
+  color?: InputMaybe<Scalars['String']['input']>;
   details?: InputMaybe<Scalars['String']['input']>;
   externals?: InputMaybe<Array<MyWidgetExternalInput>>;
   gameIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  glyph?: InputMaybe<Scalars['String']['input']>;
   imageId?: InputMaybe<Scalars['ID']['input']>;
   infos?: InputMaybe<Scalars['String']['input']>;
   permissions?: InputMaybe<Array<WidgetPermissionInput>>;
@@ -3333,7 +3369,6 @@ export type UpdateMyWidgetInput = {
   preview?: InputMaybe<Scalars['Boolean']['input']>;
   size?: InputMaybe<UpdateMyOwnWidgetSizeInput>;
   summary?: InputMaybe<Scalars['String']['input']>;
-  theme?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
   widgetId: Scalars['ID']['input'];
 };
@@ -3361,7 +3396,6 @@ export type UpdateMyWidgetResourcesInput = {
 export type UpdateMyWidgetVersionInput = {
   infos?: InputMaybe<Scalars['String']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
-  theme?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
   widgetVersionId: Scalars['ID']['input'];
 };
@@ -3386,9 +3420,11 @@ export type WatchMyWidgetInput = {
 export type Widget = {
   __typename?: 'Widget';
   category?: Maybe<WidgetCategory>;
+  color?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Timestamp']['output'];
   details: Scalars['String']['output'];
   games: Array<Game>;
+  glyph?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   image?: Maybe<Media>;
   infos: Scalars['String']['output'];
@@ -3398,13 +3434,19 @@ export type Widget = {
   preview: Scalars['Boolean']['output'];
   size: Size;
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
   usage: Scalars['Int']['output'];
   user: User;
   version?: Maybe<WidgetVersion>;
 };
+
+export enum WidgetAccessRole {
+  Editor = 'EDITOR',
+  Owner = 'OWNER',
+  User = 'USER',
+  Viewer = 'VIEWER'
+}
 
 export enum WidgetAccessScope {
   All = 'ALL',
@@ -3579,21 +3621,16 @@ export type WidgetPermissionInput = {
 
 export type WidgetResult = MyWidget | Widget;
 
-export enum WidgetAccessRole {
-  Editor = 'EDITOR',
-  Owner = 'OWNER',
-  User = 'USER',
-  Viewer = 'VIEWER'
-}
-
 export type WidgetSnapshot = {
   __typename?: 'WidgetSnapshot';
   assets: Array<WidgetAsset>;
   category?: Maybe<WidgetCategory>;
+  color?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Timestamp']['output'];
   details: Scalars['String']['output'];
   fields: Array<WidgetField>;
   games: Array<Game>;
+  glyph?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   image?: Maybe<Media>;
   infos: Scalars['String']['output'];
@@ -3605,7 +3642,6 @@ export type WidgetSnapshot = {
   preview: Scalars['Boolean']['output'];
   size: Size;
   summary: Scalars['String']['output'];
-  theme: Scalars['String']['output'];
   title: Scalars['String']['output'];
   updatedAt: Scalars['Timestamp']['output'];
   usage: Scalars['Int']['output'];

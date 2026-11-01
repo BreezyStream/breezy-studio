@@ -11,7 +11,7 @@ fragment ObjectClassificationModelData on MyObjectClassificationModel {
 	id
 	title
 	infos
-	theme
+	color
 	usage
 	likes
 	labelCount
