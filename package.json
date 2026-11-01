@@ -15,9 +15,9 @@
 		"build": "tsc && tsc-alias",
 		"start": "tsc && tsc-alias && concurrently \"tsc -w\" \"tsc-alias -w\" \"node scripts/watch.js\"",
 		"dist:mac": "electron-builder --mac --publish never",
-		"release:mac": ". ~/.config/breezy/notarize.env && npm run build && electron-builder --mac --publish never",
+		"release:mac": ". ~/.config/breezy/notarize.env && npm run build && electron-builder --mac --publish always",
 		"dist:win": "electron-builder --win --publish never",
-		"release:win": "npm run build && electron-builder --win --publish never",
+		"release:win": "npm run build && electron-builder --win --publish always",
 		"dist": "electron-builder",
 		"codegen": "NODE_TLS_REJECT_UNAUTHORIZED=0 graphql-codegen",
 		"codegen:watch": "NODE_TLS_REJECT_UNAUTHORIZED=0 graphql-codegen --watch"
@@ -25,6 +25,11 @@
 	"build": {
 		"appId": "stream.breezy.studio",
 		"productName": "Breezy Studio",
+		"publish": {
+			"provider": "github",
+			"owner": "BreezyStream",
+			"repo": "breezy-studio"
+		},
 		"mac": {
 			"icon": "build/icons/icon.icns",
 			"category": "public.app-category.developer-tools",
@@ -133,6 +138,7 @@
 		"apollo-upload-client": "^19.0.0",
 		"cross-fetch": "^4.1.0",
 		"electron-store": "^11.0.2",
+		"electron-updater": "^6.8.11",
 		"form-data-encoder": "^4.1.0",
 		"graphql": "^16.14.0",
 		"node-fetch": "^3.3.2",

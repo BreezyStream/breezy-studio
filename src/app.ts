@@ -1,3 +1,4 @@
+import electronUpdater from 'electron-updater'
 import fs from 'fs'
 import path from 'path'
 import { app } from 'electron'
@@ -37,6 +38,7 @@ export function launch() {
 	function onReady() {
 		createMenu()
 		createDisplayMediaHandler()
+		createUpdater()
 		let window = createWindow()
 		objectClassificationModelTrainer = new ObjectClassificationModelTrainer(window)
 	}
@@ -165,6 +167,38 @@ export function launch() {
 		}, {
 			useSystemPicker: true
 		})
+	}
+
+	/**
+	 * @function createUpdater
+	 * @since 1.0.0
+	 */
+	function createUpdater() {
+
+		/**
+		 * Updates are downloaded in the background from GitHub releases and
+		 * installed when the app quits, so a running training is never
+		 * inonterrupted. Unpackaged builds have nothing to update.
+		 */
+
+		if (app.isPackaged == false) {
+			return
+		}
+
+		/**
+		 * electron-updater is CommonJS, its named exports are only reachable
+		 * through the default import.
+		 */
+
+		let { autoUpdater } = electronUpdater
+
+		let check = () => autoUpdater.checkForUpdatesAndNotify().catch((err: Error) => {
+			console.error('Error', 'Update check failed.', err)
+		})
+
+		check()
+
+		setInterval(check, 60 * 60 * 1000)
 	}
 
 	/**
