@@ -88,7 +88,33 @@ npm run dist:mac      # unsigned .dmg / .zip in release/
 npm run dist:win      # unsigned installer in release/
 ```
 
-`npm run release:mac` builds a signed, notarized app. It sources an App Store Connect API key (`APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`) from `~/.config/breezy/notarize.env`.
+### Release
+
+Installed apps update themselves from the GitHub [Releases](https://github.com/breezystream/breezy-studio/releases) page. They check at launch and every hour, download the update in the background and install it when the app quits. Only the changed blocks are downloaded, so an update that doesn't touch the Python environment is a few MB.
+
+The release scripts need:
+
+| Variable | Used by | Purpose |
+|---|---|---|
+| `GH_TOKEN` | both | Fine-grained GitHub token on `breezystream/breezy-studio` with **Contents: Read and write** |
+| `APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER` | macOS | App Store Connect API key, for signing and notarization |
+
+On macOS, `npm run release:mac` sources them from `~/.config/breezy/notarize.env`. On Windows, set `GH_TOKEN` in the environment.
+
+To publish a version:
+
+1. Bump the version and push the tag:
+   ```bash
+   npm version patch          # or minor / major — commits and tags vX.Y.Z
+   git push --follow-tags
+   ```
+2. On macOS, run `npm run release:mac`. It builds, notarizes and uploads the `.dmg`, `.zip`, blockmaps and `latest-mac.yml` to a **draft** release `vX.Y.Z`.
+3. On Windows, `git pull` then run `npm run release:win`. It adds the installer and `latest.yml` to the same draft.
+4. On GitHub, open the draft, check that both `latest-mac.yml` and `latest.yml` are attached, add release notes and click **Publish release**.
+
+Installed apps only see a release once it's published, so the draft is the last chance to check it.
+
+To test an update end to end, install a published version, release the next one, then open the installed app. It should download the update and notify you. Quit and reopen to run the new version.
 
 ## Contributing
 
