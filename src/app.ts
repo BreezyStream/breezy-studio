@@ -1,8 +1,10 @@
 import fs from 'fs'
 import path from 'path'
 import { app } from 'electron'
+import { desktopCapturer } from 'electron'
 import { nativeImage } from 'electron'
 import { screen } from 'electron'
+import { session } from 'electron'
 import { BrowserWindow } from 'electron'
 import { Menu } from 'electron'
 import { UnexpectedError } from 'libs/error/UnexpectedError'
@@ -34,6 +36,7 @@ export function launch() {
 	 */
 	function onReady() {
 		createMenu()
+		createDisplayMediaHandler()
 		let window = createWindow()
 		objectClassificationModelTrainer = new ObjectClassificationModelTrainer(window)
 	}
@@ -94,6 +97,7 @@ export function launch() {
 
 		// Development keeps Electron's default menu, with reload and the
 		// developer tools.
+
 		let dev = process.env.DEV == '1'
 		if (dev) {
 			return
@@ -101,6 +105,7 @@ export function launch() {
 
 		// Electron's default menu, without the developer tools and Electron's
 		// help links.
+
 		let view: Electron.MenuItemConstructorOptions = {
 			label: 'View',
 			submenu: [
@@ -116,6 +121,7 @@ export function launch() {
 		}
 
 		let menu = process.platform === 'darwin'
+
 			? Menu.buildFromTemplate([
 				{ role: 'appMenu' },
 				{ role: 'fileMenu' },
@@ -123,6 +129,7 @@ export function launch() {
 				view,
 				{ role: 'windowMenu' },
 			])
+
 			: Menu.buildFromTemplate([
 				{ role: 'fileMenu' },
 				{ role: 'editMenu' },
@@ -131,6 +138,33 @@ export function launch() {
 			])
 
 		Menu.setApplicationMenu(menu)
+	}
+
+	/**
+	 * @function createDisplayMediaHandler
+	 * @since 1.0.0
+	 */
+	function createDisplayMediaHandler() {
+
+		// Electron rejects getDisplayMedia unless a handler picks the source.
+		// The system picker is used where available (macOS 15+), otherwise
+		// the primary screen is shared.
+
+		session.defaultSession.setDisplayMediaRequestHandler(async (request, callback) => {
+
+			let [
+				source
+			] = await desktopCapturer.getSources({ types: ['screen'] })
+
+			callback(
+				source
+					? { video: source }
+					: {}
+			)
+
+		}, {
+			useSystemPicker: true
+		})
 	}
 
 	/**
