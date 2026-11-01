@@ -291,8 +291,8 @@ class Model:
                 f"({len(records)} labeled image(s) found). Confirm more annotations and try again."
             )
 
-        self.train_ds = self.dataset(train_records, self.image_size, self.batch_size, self.num_classes)
-        self.valid_ds = self.dataset(valid_records, self.image_size, self.batch_size, self.num_classes)
+        self.train_ds = self.dataset(train_records, self.image_size, self.batch_size, self.num_classes, augment=True)
+        self.valid_ds = self.dataset(valid_records, self.image_size, self.batch_size, self.num_classes, augment=False)
 
         self.split_stats = {
             "total": len(records),
@@ -360,9 +360,10 @@ class Model:
 
         x = keras.Sequential([
              layers.RandomFlip("horizontal"),
-             layers.RandomZoom(0.05,     fill_mode="reflect"),
-             layers.RandomRotation(0.03, fill_mode="reflect"),
-             layers.RandomContrast(0.05),
+             layers.RandomZoom(0.1,               fill_mode="reflect"),
+             layers.RandomRotation(0.03,          fill_mode="reflect"),
+             layers.RandomTranslation(0.05, 0.05, fill_mode="reflect"),
+             layers.RandomContrast(0.2),
          ], name="augmentation")(inputs)
 
         #
@@ -437,7 +438,8 @@ class Model:
         records: List[Record],
         image_size: int,
         batch_size: int,
-        num_classes: int
+        num_classes: int,
+        augment: bool
     ) -> Any:
 
         images = [s.image for s in records]
@@ -451,10 +453,16 @@ class Model:
         dataset = tf.data.Dataset.from_tensor_slices((images, labels))
 
         def mapper(image_data, y):
-            return decode(
+
+            image = decode(
                 image_data,
                 image_size
-            ), y
+            )
+
+            if augment:
+                image = jitter(image)
+
+            return image, y
 
         # Deterministic pipeline: single-threaded map, prefetch(1)
         dataset = dataset.map(mapper, num_parallel_calls=1)
@@ -522,6 +530,25 @@ def count_per_class(records: List[Record]) -> Dict[int, int]:
             counts[label] += 1
 
     return dict(counts)
+
+#
+# Function: jitter
+# Since: 1.0.0
+# Hidden
+#
+# Randomly shifts the colors of an image so the model learns shapes rather
+# than one specific palette (e.g. a single character skin or outfit). Runs in
+# the dataset pipeline instead of the model so it never reaches the exported
+# TFLite file.
+#
+
+def jitter(image: tf.Tensor) -> tf.Tensor:
+	image = image / 255.0
+	image = tf.image.random_hue(image, 0.05)
+	image = tf.image.random_saturation(image, 0.7, 1.3)
+	image = tf.image.random_brightness(image, 0.15)
+	image = tf.clip_by_value(image, 0.0, 1.0)
+	return image * 255.0
 
 #
 # Function: decode
