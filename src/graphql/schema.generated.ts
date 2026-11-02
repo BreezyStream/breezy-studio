@@ -238,10 +238,6 @@ export type CreateMyOverlaySizeInput = {
   w: Scalars['Int']['input'];
 };
 
-export type CreateMyOwnWidgetGameInput = {
-  id: Scalars['ID']['input'];
-};
-
 export type CreateMyOwnWidgetSizeInput = {
   h: Scalars['Int']['input'];
   w: Scalars['Int']['input'];
@@ -361,7 +357,7 @@ export type DeleteMyWidgetMemberInput = {
 };
 
 export type DeleteMyWidgetModelInput = {
-  id: Scalars['ID']['input'];
+  widgetModelId: Scalars['ID']['input'];
 };
 
 export type DeleteMyWidgetResourceInput = {
@@ -417,7 +413,7 @@ export type GameCollectionInput = {
 };
 
 export type GameInput = {
-  id: Scalars['ID']['input'];
+  gameId: Scalars['ID']['input'];
 };
 
 export type GameSelection = {
@@ -461,7 +457,7 @@ export type Language = {
 };
 
 export type LanguageInput = {
-  id: Scalars['ID']['input'];
+  languageId: Scalars['ID']['input'];
 };
 
 export type LanguageList = {
@@ -666,7 +662,7 @@ export type ModelCollectionInput = {
 };
 
 export type ModelInput = {
-  id: Scalars['ID']['input'];
+  modelId: Scalars['ID']['input'];
 };
 
 export enum ModelMemberRole {
@@ -1700,6 +1696,7 @@ export type MyOverlayWidget = {
   anchor: Point;
   available: Scalars['Boolean']['output'];
   createdAt: Scalars['Timestamp']['output'];
+  display: OverlayWidgetDisplay;
   hidden: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   index: Scalars['Int']['output'];
@@ -1902,6 +1899,7 @@ export type MyWidget = {
   usage: Scalars['Int']['output'];
   user: User;
   version?: Maybe<WidgetVersion>;
+  visibility: WidgetVisibility;
 };
 
 export type MyWidgetAsset = {
@@ -2085,7 +2083,7 @@ export type MyWidgetLibraryCollectionInput = {
 };
 
 export type MyWidgetLibraryInput = {
-  id: Scalars['ID']['input'];
+  widgetLibraryId: Scalars['ID']['input'];
 };
 
 export type MyWidgetLibraryList = {
@@ -2454,7 +2452,19 @@ export type ObjectClassificationModelVersionCollectionInput = {
 };
 
 export type ObjectClassificationModelVersionInput = {
-  id: Scalars['ID']['input'];
+  objectClassificationModelVersionId: Scalars['ID']['input'];
+};
+
+export type ObjectClassificationModelVersionList = {
+  __typename?: 'ObjectClassificationModelVersionList';
+  items: Array<ObjectClassificationModelVersion>;
+  total: Scalars['Int']['output'];
+};
+
+export type ObjectClassificationModelVersionListInput = {
+  objectClassificationModelId: Scalars['ID']['input'];
+  order?: InputMaybe<Array<ListOrderInput>>;
+  query?: InputMaybe<Array<ListQueryInput>>;
 };
 
 export type ObjectClassificationModelVersionMetrics = {
@@ -2544,6 +2554,7 @@ export type OverlayWidget = {
   anchor: Point;
   available: Scalars['Boolean']['output'];
   createdAt: Scalars['Timestamp']['output'];
+  display: OverlayWidgetDisplay;
   id: Scalars['ID']['output'];
   index: Scalars['Int']['output'];
   infos?: Maybe<Scalars['String']['output']>;
@@ -2553,6 +2564,74 @@ export type OverlayWidget = {
   title?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['Timestamp']['output'];
   values: Scalars['Object']['output'];
+};
+
+export type OverlayWidgetDisplay = {
+  __typename?: 'OverlayWidgetDisplay';
+  enterTransition: OverlayWidgetDisplayTransition;
+  initial: OverlayWidgetDisplayInitial;
+  leaveTransition: OverlayWidgetDisplayTransition;
+  rules: Array<OverlayWidgetDisplayRule>;
+};
+
+export enum OverlayWidgetDisplayInitial {
+  Hidden = 'HIDDEN',
+  Visible = 'VISIBLE'
+}
+
+export type OverlayWidgetDisplayInput = {
+  enterTransition: OverlayWidgetDisplayTransitionInput;
+  initial: OverlayWidgetDisplayInitial;
+  leaveTransition: OverlayWidgetDisplayTransitionInput;
+  rules: Array<OverlayWidgetDisplayRuleInput>;
+};
+
+export type OverlayWidgetDisplayRule = {
+  __typename?: 'OverlayWidgetDisplayRule';
+  cooldown?: Maybe<Scalars['Float']['output']>;
+  duration?: Maybe<Scalars['Float']['output']>;
+  event?: Maybe<Scalars['String']['output']>;
+  interval?: Maybe<Scalars['Float']['output']>;
+  label?: Maybe<Scalars['ID']['output']>;
+  model?: Maybe<Scalars['ID']['output']>;
+  stability?: Maybe<Scalars['Float']['output']>;
+  threshold?: Maybe<Scalars['Float']['output']>;
+  type: OverlayWidgetDisplayRuleType;
+  version?: Maybe<Scalars['ID']['output']>;
+};
+
+export type OverlayWidgetDisplayRuleInput = {
+  cooldown?: InputMaybe<Scalars['Float']['input']>;
+  duration?: InputMaybe<Scalars['Float']['input']>;
+  event?: InputMaybe<Scalars['String']['input']>;
+  interval?: InputMaybe<Scalars['Float']['input']>;
+  label?: InputMaybe<Scalars['ID']['input']>;
+  model?: InputMaybe<Scalars['ID']['input']>;
+  stability?: InputMaybe<Scalars['Float']['input']>;
+  threshold?: InputMaybe<Scalars['Float']['input']>;
+  type: OverlayWidgetDisplayRuleType;
+  version?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export enum OverlayWidgetDisplayRuleType {
+  Event = 'EVENT',
+  Model = 'MODEL',
+  Timer = 'TIMER'
+}
+
+export type OverlayWidgetDisplayTransition = {
+  __typename?: 'OverlayWidgetDisplayTransition';
+  delay: Scalars['Float']['output'];
+  duration: Scalars['Float']['output'];
+  easing: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type OverlayWidgetDisplayTransitionInput = {
+  delay: Scalars['Float']['input'];
+  duration: Scalars['Float']['input'];
+  easing: Scalars['String']['input'];
+  name: Scalars['String']['input'];
 };
 
 export type Plan = {
@@ -2585,7 +2664,7 @@ export type PlanCollectionInput = {
 };
 
 export type PlanInput = {
-  id: Scalars['ID']['input'];
+  planId: Scalars['ID']['input'];
 };
 
 export type PlanPrice = {
@@ -2682,6 +2761,7 @@ export type Query = {
   myWidgetVersionCollection: MyWidgetVersionCollection;
   objectClassificationModelVersion?: Maybe<ObjectClassificationModelVersion>;
   objectClassificationModelVersionCollection: ObjectClassificationModelVersionCollection;
+  objectClassificationModelVersionList: ObjectClassificationModelVersionList;
   overlay?: Maybe<Overlay>;
   plan?: Maybe<Plan>;
   planCollection: PlanCollection;
@@ -2972,6 +3052,11 @@ export type QueryObjectClassificationModelVersionCollectionArgs = {
 };
 
 
+export type QueryObjectClassificationModelVersionListArgs = {
+  input: ObjectClassificationModelVersionListInput;
+};
+
+
 export type QueryOverlayArgs = {
   input: OverlayInput;
 };
@@ -3037,7 +3122,7 @@ export type RecoverUserPasswordInput = {
 };
 
 export type RefreshMyTwitchAccessTokenInput = {
-  id: Scalars['ID']['input'];
+  twitchAccessTokenId: Scalars['ID']['input'];
 };
 
 export type RefreshOverlayTwitchAccessTokenInput = {
@@ -3068,7 +3153,7 @@ export type Resolution = {
 };
 
 export type ResolutionInput = {
-  id: Scalars['ID']['input'];
+  resolutionId: Scalars['ID']['input'];
 };
 
 export type ResolutionList = {
@@ -3088,13 +3173,7 @@ export type ResolutionListInput = {
 };
 
 export type RevokeMyTwitchAccessTokenInput = {
-  id: Scalars['ID']['input'];
-};
-
-export type SegmentInput = {
-  id: Scalars['ID']['input'];
-  position: Scalars['Int']['input'];
-  relative?: InputMaybe<Scalars['ID']['input']>;
+  twitchAccessTokenId: Scalars['ID']['input'];
 };
 
 export type SelectMyOverlayWidgetVersionInput = {
@@ -3198,11 +3277,11 @@ export type SubscriptionWatchMyWidgetArgs = {
 };
 
 export type ToggleModelLikeInput = {
-  id: Scalars['ID']['input'];
+  modelId: Scalars['ID']['input'];
 };
 
 export type ToggleWidgetLikeInput = {
-  id: Scalars['ID']['input'];
+  widgetId: Scalars['ID']['input'];
 };
 
 export type UpdateMyAssistantSettingsInput = {
@@ -3283,6 +3362,7 @@ export type UpdateMyOverlaySizeInput = {
 export type UpdateMyOverlayWidgetInput = {
   active?: InputMaybe<Scalars['Boolean']['input']>;
   anchor?: InputMaybe<PointInput>;
+  display?: InputMaybe<OverlayWidgetDisplayInput>;
   hidden?: InputMaybe<Scalars['Boolean']['input']>;
   index?: InputMaybe<Scalars['Int']['input']>;
   infos?: InputMaybe<Scalars['String']['input']>;
@@ -3297,10 +3377,6 @@ export type UpdateMyOverlayWidgetInput = {
 export type UpdateMyOverlayWidgetValueInput = {
   field: Scalars['ID']['input'];
   value: Scalars['Mixed']['input'];
-};
-
-export type UpdateMyOwnWidgetGameInput = {
-  id: Scalars['ID']['input'];
 };
 
 export type UpdateMyOwnWidgetSizeInput = {
@@ -3370,6 +3446,7 @@ export type UpdateMyWidgetInput = {
   size?: InputMaybe<UpdateMyOwnWidgetSizeInput>;
   summary?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
+  visibility?: InputMaybe<WidgetVisibility>;
   widgetId: Scalars['ID']['input'];
 };
 
@@ -3439,6 +3516,7 @@ export type Widget = {
   usage: Scalars['Int']['output'];
   user: User;
   version?: Maybe<WidgetVersion>;
+  visibility: WidgetVisibility;
 };
 
 export enum WidgetAccessRole {
@@ -3574,7 +3652,7 @@ export type WidgetField = {
 };
 
 export type WidgetInput = {
-  id: Scalars['ID']['input'];
+  widgetId: Scalars['ID']['input'];
 };
 
 export enum WidgetLanguage {
@@ -3647,6 +3725,7 @@ export type WidgetSnapshot = {
   usage: Scalars['Int']['output'];
   user: User;
   version?: Maybe<WidgetVersion>;
+  visibility: WidgetVisibility;
   widget: Widget;
 };
 
@@ -3687,3 +3766,8 @@ export type WidgetVersionCollectionInput = {
 export type WidgetVersionInput = {
   widgetVersionId: Scalars['ID']['input'];
 };
+
+export enum WidgetVisibility {
+  Conditional = 'CONDITIONAL',
+  Persistent = 'PERSISTENT'
+}
