@@ -1,3 +1,4 @@
+import fs from 'fs'
 import path from 'path'
 import { randomUUID } from 'crypto'
 import { app } from 'electron'
@@ -9,6 +10,7 @@ import { MyObjectClassificationModelTrainingMetrics } from 'graphql/schema.gener
 import { CombinedGraphQLErrors } from 'libs/apollo'
 import { Bridge } from 'libs/bridge/Bridge'
 import { UnexpectedError } from 'libs/error/UnexpectedError'
+import { TaskState } from 'libs/task/Task'
 import { TaskList } from 'libs/task/TaskList'
 import { ObjectClassificationModelData } from 'object-classification/main.generated'
 import { ObjectClassificationModelManifest } from 'object-classification/manifest/ObjectClassificationModelManifest'
@@ -83,7 +85,9 @@ export class ObjectClassificationModelTrainer extends Bridge {
 		let session: ObjectClassificationTrainingSession = {
 			id: uuid(),
 			step: ObjectClassificationTrainingSessionStep.Starting,
-			data: {}
+			data: {
+				updatedAt: Date.now()
+			}
 		}
 
 		this.session = session
@@ -199,7 +203,7 @@ export class ObjectClassificationModelTrainer extends Bridge {
 
 		tasks.on('update', (step: ObjectClassificationTrainingSessionStep, data: ObjectClassificationTrainingSessionData) => {
 			session.step = step
-			session.data = data
+			session.data = { ...data, updatedAt: Date.now() }
 			this.update()
 		})
 
@@ -219,6 +223,13 @@ export class ObjectClassificationModelTrainer extends Bridge {
 			await tasks.execute()
 
 		} finally {
+
+			// The finish task removes the training files, but it does not run
+			// when the training is canceled.
+
+			if (tasks.state == TaskState.Canceled) {
+				fs.rmSync(config.train.rootPath, { recursive: true, force: true })
+			}
 
 			this.session = null
 			this.tasks = null

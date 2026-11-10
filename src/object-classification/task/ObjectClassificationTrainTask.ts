@@ -5,6 +5,7 @@ import { ObjectClassificationModelData } from 'object-classification/main.genera
 import { ObjectClassificationModelClassMetrics } from 'object-classification/types'
 import { ObjectClassificationModelMetrics } from 'object-classification/types'
 import { ObjectClassificationTrainingSessionConfig } from 'object-classification/types'
+import { ObjectClassificationTrainingSessionRound } from 'object-classification/types'
 import { ObjectClassificationTrainingSessionStep } from 'object-classification/types'
 
 /**
@@ -40,6 +41,20 @@ export class ObjectClassificationTrainTask extends ObjectClassificationTrainingT
 	 * @hidden
 	 */
 	private classMetrics: Dictionary<ObjectClassificationModelClassMetrics>
+
+	/**
+	 * @property startedAt
+	 * @since 1.0.0
+	 * @hidden
+	 */
+	private startedAt: number = 0
+
+	/**
+	 * @property history
+	 * @since 1.0.0
+	 * @hidden
+	 */
+	private history: Array<ObjectClassificationTrainingSessionRound> = []
 
 	/**
 	 * @constructor
@@ -147,6 +162,11 @@ export class ObjectClassificationTrainTask extends ObjectClassificationTrainingT
 
 		if (task == 'train') {
 
+			if (data.status == 'began') {
+				this.startedAt = Date.now()
+				this.history = []
+			}
+
 			if (data.status == 'began' ||
 				data.status == 'ended') {
 				this.update(ObjectClassificationTrainingSessionStep.Train)
@@ -160,13 +180,22 @@ export class ObjectClassificationTrainTask extends ObjectClassificationTrainingT
 
 				let {
 					epoch,
-					total
+					total,
+					stats
 				} = data.result
+
+				this.history.push({
+					epoch,
+					score: this.getScore(stats ?? {}),
+					time: Date.now()
+				})
 
 				this.update(ObjectClassificationTrainingSessionStep.Train, {
 					progress: epoch / total,
 					epoch,
 					total,
+					startedAt: this.startedAt,
+					history: this.history
 				})
 			}
 
@@ -218,7 +247,27 @@ export class ObjectClassificationTrainTask extends ObjectClassificationTrainingT
 	}
 
 	/**
-	 * @method onErrMessage
+	 * @method getScore
+	 * @since 1.0.0
+	 * @hidden
+	 */
+	private getScore(stats: Dictionary<number>) {
+
+		// F1 of precision and recall. Binary accuracy is not used because
+		// negative labels dominate a multi-label output and inflate it.
+
+		let precision = stats.val_precision ?? stats.precision ?? 0
+		let recall = stats.val_recall ?? stats.recall ?? 0
+
+		if (precision + recall == 0) {
+			return 0
+		}
+
+		return 2 * precision * recall / (precision + recall)
+	}
+
+	/**
+	 * @method decode
 	 * @since 1.0.0
 	 * @hidden
 	 */

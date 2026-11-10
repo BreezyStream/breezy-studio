@@ -143,4 +143,30 @@ export enum ObjectClassificationTrainingSessionStep {
  * @type ObjectClassificationTrainingSessionData
  * @since 1.0.0
  */
-export type ObjectClassificationTrainingSessionData = any
+export type ObjectClassificationTrainingSessionData = {
+
+	/* Set by the trainer on every update */
+	updatedAt: number
+
+	/* Shared by PrepareTrain and Train, between 0 and 1 */
+	progress?: number
+
+	/* PrepareTrain: images processed / to process. Train: rounds to run */
+	count?: number
+	total?: number
+
+	/* Train */
+	epoch?: number
+	startedAt?: number
+	history?: Array<ObjectClassificationTrainingSessionRound>
+}
+
+/**
+ * @type ObjectClassificationTrainingSessionRound
+ * @since 1.0.0
+ */
+export type ObjectClassificationTrainingSessionRound = {
+	epoch: number
+	score: number
+	time: number
+}
