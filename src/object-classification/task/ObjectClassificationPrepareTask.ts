@@ -79,6 +79,11 @@ export class ObjectClassificationPrepareTask extends ObjectClassificationTrainin
 	 */
 	public async execute() {
 		await this.prepareModel()
+
+		if (this.state == TaskState.Canceled) {
+			return
+		}
+
 		await this.prepareTrain()
 		this.finish()
 	}
@@ -192,6 +197,8 @@ export class ObjectClassificationPrepareTask extends ObjectClassificationTrainin
 
 		this.modelManifest.data.images = images
 		this.modelManifest.save()
+
+		this.images = this.images.filter(image => images.some(entry => entry.id == image.id))
 	}
 
 	/**
@@ -467,7 +474,7 @@ export class ObjectClassificationPrepareTask extends ObjectClassificationTrainin
 
 			let entry = manifest.data.images.find(entry => entry.id == id)
 			if (entry == null) {
-				throw new Error()
+				throw new Error(`Image ${id} is missing from the model manifest.`)
 			}
 
 			id = String(imagesMap[val.id])
@@ -546,9 +553,17 @@ export class ObjectClassificationPrepareTask extends ObjectClassificationTrainin
 	 */
 	private async read(url: string) {
 
-		let response = await fetch(url)
-		if (response.ok) {
-			return response.arrayBuffer()
+		try {
+
+			let response = await fetch(url)
+			if (response.ok) {
+				return await response.arrayBuffer()
+			}
+
+			console.warn(`[ObjectClassificationPrepareTask] Skipped image ${url}: HTTP ${response.status}`)
+
+		} catch (error) {
+			console.warn(`[ObjectClassificationPrepareTask] Skipped image ${url}:`, error)
 		}
 
 		return null

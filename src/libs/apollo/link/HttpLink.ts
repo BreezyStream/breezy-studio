@@ -70,7 +70,7 @@ function isExtractableFile(value: unknown): value is File {
  */
 async function getToken(): Promise<any> {
 
-	let cookie = await session.defaultSession.cookies.get({ url: process.env.APP_URL, name: 'token' }).then(cookies => cookies.pop())
+	let cookie = await session.defaultSession.cookies.get({ url: process.env.API_URL, name: 'token' }).then(cookies => cookies.pop())
 	if (cookie) {
 		return cookie.value
 

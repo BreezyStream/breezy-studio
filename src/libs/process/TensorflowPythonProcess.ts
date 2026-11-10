@@ -62,6 +62,7 @@ export class TensorflowPythonProcess extends EventEmitter {
 		this.process.stdout.on('data', this.onOutMessage.bind(this))
 		this.process.stderr.on('data', this.onErrMessage.bind(this))
 		this.process.on('close', this.onClose.bind(this))
+		this.process.on('error', this.onError.bind(this))
 	}
 
 	/**
@@ -79,7 +80,10 @@ export class TensorflowPythonProcess extends EventEmitter {
 	 * @since 1.0.0
 	 */
 	public async wait() {
-		return new Promise<void>(done => this.on('done', done))
+		return new Promise<number | null>((resolve, reject) => {
+			this.once('done', resolve)
+			this.once('fail', reject)
+		})
 	}
 
 	//--------------------------------------------------------------------------
@@ -220,8 +224,16 @@ export class TensorflowPythonProcess extends EventEmitter {
 	 * @since 1.0.0
 	 * @hidden
 	 */
-	private onClose(code: number) {
-		//console.log('Object Detection Process closed with code: ' + code)
-		this.emit('done')
+	private onClose(code: number | null) {
+		this.emit('done', code)
+	}
+
+	/**
+	 * @method onError
+	 * @since 1.0.0
+	 * @hidden
+	 */
+	private onError(error: Error) {
+		this.emit('fail', error)
 	}
 }

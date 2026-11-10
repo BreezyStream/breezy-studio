@@ -146,18 +146,12 @@ export class ObjectClassificationUploadTask extends ObjectClassificationTraining
 			objectClassificationModelId: modelId
 		}
 
-		try {
-
-			await client.mutate({
-				mutation: CreateMyObjectClassificationModelTraining,
-				variables: {
-					input
-				}
-			})
-
-		} catch (error) {
-			this.emit('error', error)
-		}
+		await client.mutate({
+			mutation: CreateMyObjectClassificationModelTraining,
+			variables: {
+				input
+			}
+		})
 
 		this.finish()
 	}

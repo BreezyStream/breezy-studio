@@ -13,6 +13,12 @@ export class Task extends EventEmitter {
 	public state: TaskState
 
 	/**
+	 * @property error
+	 * @since 1.0.0
+	 */
+	public error: unknown = null
+
+	/**
 	 * @constructor
 	 * @since 1.0.0
 	 */
@@ -29,7 +35,7 @@ export class Task extends EventEmitter {
 
 		if (this.state == TaskState.Idle) {
 			this.state = TaskState.Running
-			this.execute()
+			this.run()
 		}
 
 		return this
@@ -39,7 +45,7 @@ export class Task extends EventEmitter {
 	 * @method execute
 	 * @since 1.0.0
 	 */
-	public execute() {
+	public async execute() {
 
 	}
 
@@ -72,6 +78,21 @@ export class Task extends EventEmitter {
 	}
 
 	/**
+	 * @method fail
+	 * @since 1.0.0
+	 */
+	public fail(error: unknown) {
+
+		if (this.state == TaskState.Running) {
+			this.state = TaskState.Failed
+			this.error = error
+			this.emit('fail', error)
+		}
+
+		return this
+	}
+
+	/**
 	 * @method waitDone
 	 * @since 1.0.0
 	 */
@@ -80,13 +101,15 @@ export class Task extends EventEmitter {
 		let promise = new Promise<void>(done => {
 
 			if (this.state == TaskState.Canceled ||
-				this.state == TaskState.Finished) {
+				this.state == TaskState.Finished ||
+				this.state == TaskState.Failed) {
 				done()
 				return
 			}
 
-			this.on('cancel', done)
-			this.on('finish', done)
+			this.once('cancel', done)
+			this.once('finish', done)
+			this.once('fail', done)
 
 		})
 
@@ -111,11 +134,28 @@ export class Task extends EventEmitter {
 	//--------------------------------------------------------------------------
 
 	/**
-	 * @method progress
+	 * @method update
 	 * @since 1.0.0
 	 */
 	protected update(step: string, data: any = {}) {
 		this.emit('update', step, data)
+	}
+
+	//--------------------------------------------------------------------------
+	// Private API
+	//--------------------------------------------------------------------------
+
+	/**
+	 * @method run
+	 * @since 1.0.0
+	 * @hidden
+	 */
+	private async run() {
+		try {
+			await this.execute()
+		} catch (error) {
+			this.fail(error)
+		}
 	}
 }
 
@@ -127,5 +167,6 @@ export enum TaskState {
 	Idle,
 	Running,
 	Canceled,
-	Finished
+	Finished,
+	Failed
 }

@@ -1,4 +1,5 @@
 import { TensorflowPythonProcess } from 'libs/process/TensorflowPythonProcess'
+import { TaskState } from 'libs/task/Task'
 import { ObjectClassificationTrainingTask } from 'object-classification/lib/task/ObjectClassificationTrainingTask'
 import { ObjectClassificationModelData } from 'object-classification/main.generated'
 import { ObjectClassificationModelClassMetrics } from 'object-classification/types'
@@ -18,6 +19,13 @@ export class ObjectClassificationTrainTask extends ObjectClassificationTrainingT
 	 * @hidden
 	 */
 	private process: TensorflowPythonProcess | null = null
+
+	/**
+	 * @property errors
+	 * @since 1.0.0
+	 * @hidden
+	 */
+	private errors: Array<string> = []
 
 	/**
 	 * @property metrics
@@ -92,7 +100,11 @@ export class ObjectClassificationTrainTask extends ObjectClassificationTrainingT
 		this.process.on('stderr', this.onErrMessage.bind(this))
 		this.process.spawn()
 
-		await this.process.wait()
+		let code = await this.process.wait()
+
+		if (this.state == TaskState.Running && code != 0) {
+			throw new Error(this.errors.at(-1) ?? `Training process exited with code ${code}.`)
+		}
 
 		this.finish()
 	}
@@ -201,7 +213,8 @@ export class ObjectClassificationTrainTask extends ObjectClassificationTrainingT
 	 * @hidden
 	 */
 	private onErrMessage(message: string) {
-
+		this.errors.push(message)
+		this.errors = this.errors.slice(-20)
 	}
 
 	/**

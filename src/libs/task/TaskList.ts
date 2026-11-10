@@ -21,6 +21,12 @@ export class TaskList extends EventEmitter {
 	public state: TaskState
 
 	/**
+	 * @property error
+	 * @since 1.0.0
+	 */
+	public error: unknown = null
+
+	/**
 	 * @property task
 	 * @since 1.0.0
 	 * @hidden
@@ -43,7 +49,17 @@ export class TaskList extends EventEmitter {
 	 */
 	public async execute() {
 
+		if (this.state != TaskState.Idle) {
+			return
+		}
+
+		this.state = TaskState.Running
+
 		for (let task of this.tasks) {
+
+			if (this.state != TaskState.Running) {
+				break
+			}
 
 			/**
 			 * @function onUpdate
@@ -54,56 +70,28 @@ export class TaskList extends EventEmitter {
 				this.emit('update', step, data)
 			}
 
-			/**
-			 * @function onFinish
-			 * @since 1.0.0
-			 * @hidden
-			 */
-			const onFinish = () => {
-				this.finish()
-			}
-
-			/**
-			 * @function onError
-			 * @since 1.0.0
-			 * @hidden
-			 */
-			const onError = (error: unknown) => {
-				this.emit('error', error)
-			}
-
 			this.task = task
 			this.task.on('update', onUpdate)
-			this.task.on('finish', onFinish)
-			this.task.on('error', onError)
 			this.task.perform()
 
 			await this.task.waitDone()
-			await this.task.waitTime(500)
 
-			if (this.state == TaskState.Canceled ||
-				this.state == TaskState.Finished) {
+			this.task.off('update', onUpdate)
+
+			if (this.task.state == TaskState.Failed) {
+				this.fail(this.task.error)
 				break
 			}
-		}
-	}
 
-	/**
-	 * @method finish
-	 * @since 1.0.0
-	 */
-	public finish() {
-
-		if (this.task == null) {
-			return
+			await this.task.waitTime(500)
 		}
+
+		this.task = null
 
 		if (this.state == TaskState.Running) {
 			this.state = TaskState.Finished
-			this.finishTasks()
+			this.emit('finish')
 		}
-
-		return this
 	}
 
 	/**
@@ -112,13 +100,10 @@ export class TaskList extends EventEmitter {
 	 */
 	public cancel() {
 
-		if (this.task == null) {
-			return
-		}
-
 		if (this.state == TaskState.Running) {
 			this.state = TaskState.Canceled
-			this.cancelTasks()
+			this.task?.cancel()
+			this.emit('cancel')
 		}
 
 		return this
@@ -129,20 +114,18 @@ export class TaskList extends EventEmitter {
 	//--------------------------------------------------------------------------
 
 	/**
-	 * @method finishTasks
+	 * @method fail
 	 * @since 1.0.0
 	 * @hidden
 	 */
-	private finishTasks() {
-		this.tasks.forEach(task => task.finish())
-	}
+	private fail(error: unknown) {
 
-	/**
-	 * @method cancelTasks
-	 * @since 1.0.0
-	 * @hidden
-	 */
-	private cancelTasks() {
-		this.tasks.forEach(task => task.cancel())
+		if (this.state == TaskState.Running) {
+			this.state = TaskState.Failed
+			this.error = error
+			this.emit('fail', error)
+		}
+
+		return this
 	}
 }

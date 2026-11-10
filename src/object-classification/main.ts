@@ -6,6 +6,7 @@ import { IpcMainInvokeEvent } from 'electron'
 import { ObjectClassificationFinishTask } from './task/ObjectClassificationFinishTask'
 import { ObjectClassificationPrepareTask } from './task/ObjectClassificationPrepareTask'
 import { MyObjectClassificationModelTrainingMetrics } from 'graphql/schema.generated'
+import { CombinedGraphQLErrors } from 'libs/apollo'
 import { Bridge } from 'libs/bridge/Bridge'
 import { UnexpectedError } from 'libs/error/UnexpectedError'
 import { TaskList } from 'libs/task/TaskList'
@@ -38,6 +39,13 @@ export class ObjectClassificationModelTrainer extends Bridge {
 	 * @hidden
 	 */
 	private session: ObjectClassificationTrainingSession | null = null
+
+	/**
+	 * @property tasks
+	 * @since 1.0.0
+	 * @hidden
+	 */
+	private tasks: TaskList | null = null
 
 	//--------------------------------------------------------------------------
 	// Methods
@@ -89,8 +97,15 @@ export class ObjectClassificationModelTrainer extends Bridge {
 	 * @method cancelSession
 	 * @since 1.0.0
 	 */
-	public async cancelSession(event: IpcMainInvokeEvent, session: ObjectClassificationTrainingSession) {
+	public async cancelSession(event: IpcMainInvokeEvent, model: ObjectClassificationModelData) {
 
+		if (this.tasks == null) {
+			return false
+		}
+
+		this.tasks.cancel()
+
+		return true
 	}
 
 	//--------------------------------------------------------------------------
@@ -188,22 +203,25 @@ export class ObjectClassificationModelTrainer extends Bridge {
 			this.update()
 		})
 
-		tasks.on('error', (error: unknown) => {
-			this.send('ObjectClassificationModelTrainer.error', this.session, JSON.stringify(error))
+		tasks.on('fail', (error: unknown) => {
+			console.error('Error:', error)
+			this.send('ObjectClassificationModelTrainer.error', session, serializeError(error))
 		})
+
+		tasks.on('finish', () => {
+			this.finish()
+		})
+
+		this.tasks = tasks
 
 		try {
 
 			await tasks.execute()
 
-		} catch (e) {
-
-			console.error('Error:', e)
-
 		} finally {
 
-			this.finish()
 			this.session = null
+			this.tasks = null
 
 		}
 	}
@@ -285,4 +303,29 @@ export class ObjectClassificationModelTrainer extends Bridge {
  */
 function uuid() {
 	return randomUUID().replace('-', '')
+}
+
+/**
+ * @function serializeError
+ * @since 1.0.0
+ * @hidden
+ */
+function serializeError(error: unknown) {
+
+	if (CombinedGraphQLErrors.is(error)) {
+		return {
+			message: error.message,
+			errors: error.errors
+		}
+	}
+
+	if (error instanceof Error) {
+		return {
+			message: error.message
+		}
+	}
+
+	return {
+		message: String(error)
+	}
 }
