@@ -47,6 +47,7 @@
 					]
 				}
 			],
+			"artifactName": "Breezy-Studio-${version}-${arch}-mac.${ext}",
 			"minimumSystemVersion": "12.0",
 			"hardenedRuntime": true,
 			"gatekeeperAssess": false,
@@ -73,7 +74,11 @@
 			]
 		},
 		"dmg": {
-			"icon": "build/icons/icon.icns"
+			"icon": "build/icons/icon.icns",
+			"artifactName": "Breezy-Studio-${version}-${arch}.${ext}"
+		},
+		"nsis": {
+			"artifactName": "Breezy-Studio-Setup-${version}.${ext}"
 		},
 		"win": {
 			"icon": "build/icons/icon.ico",
