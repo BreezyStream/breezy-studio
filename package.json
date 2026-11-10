@@ -147,6 +147,7 @@
 		"form-data-encoder": "^4.1.0",
 		"graphql": "^16.14.0",
 		"node-fetch": "^3.3.2",
-		"progress-stream": "^2.0.0"
+		"progress-stream": "^2.0.0",
+		"rxjs": "^7.8.2"
 	}
 }
