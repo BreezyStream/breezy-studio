@@ -2,7 +2,7 @@
 	"name": "breezy-studio",
 	"author": "Jean-Philippe Dery <info@breezy.stream>",
 	"productName": "Breezy Studio",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "The Breezy desktop app, with local AI model training.",
 	"homepage": "https://breezy.stream",
 	"repository": "github:breezystream/breezy-studio",
