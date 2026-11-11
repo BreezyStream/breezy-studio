@@ -60,7 +60,7 @@ export type ObjectClassificationModelClass = {
 	id: string
 	name: string
 	label: string
-	color: string
+	color: string | null
 	index: number
 }
 

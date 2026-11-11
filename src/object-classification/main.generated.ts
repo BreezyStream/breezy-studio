@@ -39,6 +39,9 @@ export type MyObjectClassificationModelClassMetricsInput = {
 };
 
 export type MyObjectClassificationModelFileType =
+  | 'ONNX_FP16_MODEL'
+  | 'ONNX_FP32_MODEL'
+  | 'ONNX_INT8_MODEL'
   | 'TENSORFLOW_JS_MODEL'
   | 'TENSORFLOW_JS_SHARD'
   | 'TENSORFLOW_LITE_FP16_MODEL'
@@ -85,11 +88,11 @@ export type MyObjectClassificationModelTrainingMetricsInput = {
 
 export type ObjectClassificationModelData = { id: string, title: string, infos: string, color: string | null, usage: number, likes: number, labelCount: number, imageCount: number, createdAt: string, updatedAt: string, image: { id: string, url: string } | null, picto: { id: string, url: string } | null, version: { id: string, label: string } | null, latestCompletedTraining: { id: string } | null, latestPublishedTraining: { id: string } | null };
 
-export type ObjectClassificationModelLabelData = { id: string, name: string, title: string, infos: string, color: string, createdAt: string, updatedAt: string, annotationCount: number };
+export type ObjectClassificationModelLabelData = { id: string, name: string, title: string, infos: string, color: string | null, createdAt: string, updatedAt: string, annotationCount: number };
 
-export type ObjectClassificationModelImageData = { id: string, url: string, title: string, infos: string, filename: string, filesize: number, mimetype: string, createdAt: string, updatedAt: string, annotationCount: number, size: { w: number, h: number }, annotations: Array<{ id: string, status: Types.MyObjectClassificationModelAnnotationStatus, createdAt: string, updatedAt: string, label: { id: string, name: string, title: string, infos: string, color: string, createdAt: string, updatedAt: string } }> };
+export type ObjectClassificationModelImageData = { id: string, url: string, title: string, infos: string, filename: string, filesize: number, mimetype: string, createdAt: string, updatedAt: string, annotationCount: number, size: { w: number, h: number }, annotations: Array<{ id: string, status: Types.MyObjectClassificationModelAnnotationStatus, createdAt: string, updatedAt: string, label: { id: string, name: string, title: string, infos: string, color: string | null, createdAt: string, updatedAt: string } }> };
 
-export type ObjectClassificationModelAnnotationData = { id: string, status: Types.MyObjectClassificationModelAnnotationStatus, createdAt: string, updatedAt: string, label: { id: string, name: string, title: string, infos: string, color: string, createdAt: string, updatedAt: string } };
+export type ObjectClassificationModelAnnotationData = { id: string, status: Types.MyObjectClassificationModelAnnotationStatus, createdAt: string, updatedAt: string, label: { id: string, name: string, title: string, infos: string, color: string | null, createdAt: string, updatedAt: string } };
 
 export type DeleteMyObjectClassificationModelTrainingMutationVariables = Exact<{
   input: Types.DeleteMyObjectClassificationModelTrainingInput;
@@ -103,14 +106,14 @@ export type MyObjectClassificationModelLabelCollectionQueryVariables = Exact<{
 }>;
 
 
-export type MyObjectClassificationModelLabelCollectionQueryResult = { myObjectClassificationModelLabelCollection: { total: number, items: Array<{ id: string, name: string, title: string, infos: string, color: string, createdAt: string, updatedAt: string, annotationCount: number }> } };
+export type MyObjectClassificationModelLabelCollectionQueryResult = { myObjectClassificationModelLabelCollection: { total: number, items: Array<{ id: string, name: string, title: string, infos: string, color: string | null, createdAt: string, updatedAt: string, annotationCount: number }> } };
 
 export type MyObjectClassificationModelImageCollectionQueryVariables = Exact<{
   input: Types.MyObjectClassificationModelImageCollectionInput;
 }>;
 
 
-export type MyObjectClassificationModelImageCollectionQueryResult = { myObjectClassificationModelImageCollection: { total: number, items: Array<{ id: string, url: string, title: string, infos: string, filename: string, filesize: number, mimetype: string, createdAt: string, updatedAt: string, annotationCount: number, size: { w: number, h: number }, annotations: Array<{ id: string, status: Types.MyObjectClassificationModelAnnotationStatus, createdAt: string, updatedAt: string, label: { id: string, name: string, title: string, infos: string, color: string, createdAt: string, updatedAt: string } }> }> } };
+export type MyObjectClassificationModelImageCollectionQueryResult = { myObjectClassificationModelImageCollection: { total: number, items: Array<{ id: string, url: string, title: string, infos: string, filename: string, filesize: number, mimetype: string, createdAt: string, updatedAt: string, annotationCount: number, size: { w: number, h: number }, annotations: Array<{ id: string, status: Types.MyObjectClassificationModelAnnotationStatus, createdAt: string, updatedAt: string, label: { id: string, name: string, title: string, infos: string, color: string | null, createdAt: string, updatedAt: string } }> }> } };
 
 export type CreateMyObjectClassificationModelTrainingVariables = Exact<{
   input: Types.CreateMyObjectClassificationModelTrainingInput;

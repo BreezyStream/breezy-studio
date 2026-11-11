@@ -36,7 +36,7 @@ export interface ObjectClassificationTrainManifestLabelData {
 	id: ID
 	name: string
 	title: string
-	color: string
+	color: string | null
 	createdAt: string
 	updatedAt: string
 }

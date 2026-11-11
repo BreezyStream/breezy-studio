@@ -496,6 +496,10 @@ export type ListQueryInput = {
   value: Scalars['Mixed']['input'];
 };
 
+export enum LockReason {
+  PlanQuota = 'PLAN_QUOTA'
+}
+
 export enum MlInputColor {
   Bgr = 'BGR',
   Rgb = 'RGB'
@@ -1326,6 +1330,7 @@ export type MyObjectClassificationModel = {
   latestPublishedTraining?: Maybe<MyObjectClassificationModelTraining>;
   liked: Scalars['Boolean']['output'];
   likes: Scalars['Int']['output'];
+  locked?: Maybe<LockReason>;
   picto?: Maybe<Media>;
   role: ModelAccessRole;
   stability: Scalars['Float']['output'];
@@ -1355,8 +1360,9 @@ export enum MyObjectClassificationModelAnnotationStatus {
 
 export type MyObjectClassificationModelClass = {
   __typename?: 'MyObjectClassificationModelClass';
-  color: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  label?: Maybe<MyObjectClassificationModelLabel>;
   metrics: MyObjectClassificationModelClassMetrics;
   name: Scalars['String']['output'];
   title: Scalars['String']['output'];
@@ -1390,6 +1396,9 @@ export type MyObjectClassificationModelFile = {
 };
 
 export enum MyObjectClassificationModelFileType {
+  OnnxFp16Model = 'ONNX_FP16_MODEL',
+  OnnxFp32Model = 'ONNX_FP32_MODEL',
+  OnnxInt8Model = 'ONNX_INT8_MODEL',
   TensorflowJsModel = 'TENSORFLOW_JS_MODEL',
   TensorflowJsShard = 'TENSORFLOW_JS_SHARD',
   TensorflowLiteFp16Model = 'TENSORFLOW_LITE_FP16_MODEL',
@@ -1441,7 +1450,7 @@ export type MyObjectClassificationModelInput = {
 export type MyObjectClassificationModelLabel = {
   __typename?: 'MyObjectClassificationModelLabel';
   annotationCount: Scalars['Int']['output'];
-  color: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Timestamp']['output'];
   id: Scalars['ID']['output'];
   infos: Scalars['String']['output'];
@@ -1569,7 +1578,6 @@ export type MyObjectClassificationModelTrainingListInput = {
   objectClassificationModelId: Scalars['ID']['input'];
   order?: InputMaybe<Array<ListOrderInput>>;
   query?: InputMaybe<Array<ListQueryInput>>;
-  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type MyObjectClassificationModelTrainingMetrics = {
@@ -1803,9 +1811,18 @@ export type MyUserAssistantUsage = {
 
 export type MyUserEditorSettings = {
   __typename?: 'MyUserEditorSettings';
+  bracketAutoClosing?: Maybe<Scalars['Boolean']['output']>;
+  bracketPairColorization?: Maybe<Scalars['Boolean']['output']>;
+  detectIndentation?: Maybe<Scalars['Boolean']['output']>;
   fontFamily?: Maybe<Scalars['String']['output']>;
   fontSize?: Maybe<Scalars['Float']['output']>;
   fontWeight?: Maybe<Scalars['String']['output']>;
+  formatOnSave?: Maybe<Scalars['Boolean']['output']>;
+  indentGuides?: Maybe<Scalars['Boolean']['output']>;
+  indentationMode?: Maybe<Scalars['String']['output']>;
+  indentationSize?: Maybe<Scalars['Int']['output']>;
+  lineHeight?: Maybe<Scalars['Float']['output']>;
+  wordWrap?: Maybe<Scalars['Boolean']['output']>;
 };
 
 export type MyUserLikesStats = {
@@ -1826,6 +1843,20 @@ export type MyUserModelStats = {
 export type MyUserOverlayStats = {
   __typename?: 'MyUserOverlayStats';
   created: Scalars['Int']['output'];
+};
+
+export type MyUserPrivateModelUsage = {
+  __typename?: 'MyUserPrivateModelUsage';
+  locked: Scalars['Int']['output'];
+  quota: Scalars['Float']['output'];
+  usage: Scalars['Int']['output'];
+};
+
+export type MyUserPrivateWidgetUsage = {
+  __typename?: 'MyUserPrivateWidgetUsage';
+  locked: Scalars['Int']['output'];
+  quota: Scalars['Float']['output'];
+  usage: Scalars['Int']['output'];
 };
 
 export type MyUserSettings = {
@@ -1849,6 +1880,8 @@ export type MyUserStorageUsage = {
 export type MyUserUsage = {
   __typename?: 'MyUserUsage';
   assistant: MyUserAssistantUsage;
+  privateModels: MyUserPrivateModelUsage;
+  privateWidgets: MyUserPrivateWidgetUsage;
   storage: MyUserStorageUsage;
 };
 
@@ -1884,6 +1917,7 @@ export type MyWidget = {
   language: WidgetLanguage;
   liked: Scalars['Boolean']['output'];
   likes: Scalars['Int']['output'];
+  locked?: Maybe<LockReason>;
   models: Array<MyWidgetModel>;
   permissions: Array<WidgetPermission>;
   picto?: Maybe<Media>;
@@ -2326,7 +2360,7 @@ export type ObjectClassificationModel = {
 
 export type ObjectClassificationModelClass = {
   __typename?: 'ObjectClassificationModelClass';
-  color: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Timestamp']['output'];
   id: Scalars['ID']['output'];
   metrics: ObjectClassificationModelClassMetrics;
@@ -2356,6 +2390,9 @@ export type ObjectClassificationModelFile = {
 };
 
 export enum ObjectClassificationModelFileType {
+  OnnxFp16Model = 'ONNX_FP16_MODEL',
+  OnnxFp32Model = 'ONNX_FP32_MODEL',
+  OnnxInt8Model = 'ONNX_INT8_MODEL',
   TensorflowJsModel = 'TENSORFLOW_JS_MODEL',
   TensorflowJsShard = 'TENSORFLOW_JS_SHARD',
   TensorflowLiteFp16Model = 'TENSORFLOW_LITE_FP16_MODEL',
@@ -2377,7 +2414,7 @@ export type ObjectClassificationModelImage = {
 
 export type ObjectClassificationModelLabel = {
   __typename?: 'ObjectClassificationModelLabel';
-  color: Scalars['String']['output'];
+  color?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Timestamp']['output'];
   id: Scalars['ID']['output'];
   infos: Scalars['String']['output'];
@@ -2568,10 +2605,17 @@ export type OverlayWidget = {
 
 export type OverlayWidgetDisplay = {
   __typename?: 'OverlayWidgetDisplay';
-  enterTransition: OverlayWidgetDisplayTransition;
+  hideTransition: OverlayWidgetDisplayTransition;
   initial: OverlayWidgetDisplayInitial;
-  leaveTransition: OverlayWidgetDisplayTransition;
   rules: Array<OverlayWidgetDisplayRule>;
+  showTransition: OverlayWidgetDisplayTransition;
+};
+
+export type OverlayWidgetDisplayEventRule = {
+  __typename?: 'OverlayWidgetDisplayEventRule';
+  cooldown: Scalars['Float']['output'];
+  duration: Scalars['Float']['output'];
+  event: Scalars['String']['output'];
 };
 
 export enum OverlayWidgetDisplayInitial {
@@ -2580,32 +2624,30 @@ export enum OverlayWidgetDisplayInitial {
 }
 
 export type OverlayWidgetDisplayInput = {
-  enterTransition: OverlayWidgetDisplayTransitionInput;
+  hideTransition: OverlayWidgetDisplayTransitionInput;
   initial: OverlayWidgetDisplayInitial;
-  leaveTransition: OverlayWidgetDisplayTransitionInput;
   rules: Array<OverlayWidgetDisplayRuleInput>;
+  showTransition: OverlayWidgetDisplayTransitionInput;
 };
 
-export type OverlayWidgetDisplayRule = {
-  __typename?: 'OverlayWidgetDisplayRule';
-  cooldown?: Maybe<Scalars['Float']['output']>;
-  duration?: Maybe<Scalars['Float']['output']>;
-  event?: Maybe<Scalars['String']['output']>;
-  interval?: Maybe<Scalars['Float']['output']>;
-  label?: Maybe<Scalars['ID']['output']>;
-  model?: Maybe<Scalars['ID']['output']>;
+export type OverlayWidgetDisplayModelRule = {
+  __typename?: 'OverlayWidgetDisplayModelRule';
+  labels: Array<Scalars['ID']['output']>;
+  model: Scalars['ID']['output'];
+  snapshot?: Maybe<ModelSnapshot>;
   stability?: Maybe<Scalars['Float']['output']>;
   threshold?: Maybe<Scalars['Float']['output']>;
-  type: OverlayWidgetDisplayRuleType;
   version?: Maybe<Scalars['ID']['output']>;
 };
+
+export type OverlayWidgetDisplayRule = OverlayWidgetDisplayEventRule | OverlayWidgetDisplayModelRule | OverlayWidgetDisplayTimerRule;
 
 export type OverlayWidgetDisplayRuleInput = {
   cooldown?: InputMaybe<Scalars['Float']['input']>;
   duration?: InputMaybe<Scalars['Float']['input']>;
   event?: InputMaybe<Scalars['String']['input']>;
   interval?: InputMaybe<Scalars['Float']['input']>;
-  label?: InputMaybe<Scalars['ID']['input']>;
+  labels?: InputMaybe<Array<Scalars['ID']['input']>>;
   model?: InputMaybe<Scalars['ID']['input']>;
   stability?: InputMaybe<Scalars['Float']['input']>;
   threshold?: InputMaybe<Scalars['Float']['input']>;
@@ -2618,6 +2660,12 @@ export enum OverlayWidgetDisplayRuleType {
   Model = 'MODEL',
   Timer = 'TIMER'
 }
+
+export type OverlayWidgetDisplayTimerRule = {
+  __typename?: 'OverlayWidgetDisplayTimerRule';
+  duration: Scalars['Float']['output'];
+  interval: Scalars['Float']['output'];
+};
 
 export type OverlayWidgetDisplayTransition = {
   __typename?: 'OverlayWidgetDisplayTransition';
@@ -3319,6 +3367,7 @@ export type UpdateMyObjectClassificationModelInput = {
   categoryId?: InputMaybe<Scalars['ID']['input']>;
   color?: InputMaybe<Scalars['String']['input']>;
   details?: InputMaybe<Scalars['String']['input']>;
+  gameIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   glyph?: InputMaybe<Scalars['String']['input']>;
   imageId?: InputMaybe<Scalars['ID']['input']>;
   inferenceRate?: InputMaybe<Scalars['Float']['input']>;
@@ -3385,9 +3434,18 @@ export type UpdateMyOwnWidgetSizeInput = {
 };
 
 export type UpdateMyUserEditorSettingsInput = {
+  bracketAutoClosing?: InputMaybe<Scalars['Boolean']['input']>;
+  bracketPairColorization?: InputMaybe<Scalars['Boolean']['input']>;
+  detectIndentation?: InputMaybe<Scalars['Boolean']['input']>;
   fontFamily?: InputMaybe<Scalars['String']['input']>;
   fontSize?: InputMaybe<Scalars['Float']['input']>;
   fontWeight?: InputMaybe<Scalars['String']['input']>;
+  formatOnSave?: InputMaybe<Scalars['Boolean']['input']>;
+  indentGuides?: InputMaybe<Scalars['Boolean']['input']>;
+  indentationMode?: InputMaybe<Scalars['String']['input']>;
+  indentationSize?: InputMaybe<Scalars['Int']['input']>;
+  lineHeight?: InputMaybe<Scalars['Float']['input']>;
+  wordWrap?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type UpdateMyUserEmailInput = {

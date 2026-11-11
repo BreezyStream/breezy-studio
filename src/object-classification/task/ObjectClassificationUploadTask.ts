@@ -85,6 +85,18 @@ export class ObjectClassificationUploadTask extends ObjectClassificationTraining
 
 			switch (true) {
 
+				case filename.endsWith('fp32.onnx'):
+					type = MyObjectClassificationModelFileType.OnnxFp32Model
+					break
+
+				case filename.endsWith('fp16.onnx'):
+					type = MyObjectClassificationModelFileType.OnnxFp16Model
+					break
+
+				case filename.endsWith('int8.onnx'):
+					type = MyObjectClassificationModelFileType.OnnxInt8Model
+					break
+
 				case filename.endsWith('fp32.tflite'):
 					type = MyObjectClassificationModelFileType.TensorflowLiteFp32Model
 					break
@@ -172,6 +184,7 @@ export class ObjectClassificationUploadTask extends ObjectClassificationTraining
 		} = this.config.train
 
 		let files = fs.readdirSync(root).filter(file =>
+			path.extname(file) == '.onnx' ||
 			path.extname(file) == '.tflite'
 		).map(file => {
 
