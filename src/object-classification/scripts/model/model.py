@@ -1,21 +1,43 @@
-import os
-import sys
-import json
-import time
+import copy
+import math
 import random
 import numpy as np
-import tensorflow as tf
+import torch
+import torch.nn.functional as F
+from PIL import Image
 from pathlib import Path
 from typing import Any
-from typing import List
+from typing import Callable
 from typing import Dict
+from typing import List
 from typing import Tuple
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from tensorflow import keras
-from tensorflow.keras import layers
-from tensorflow.keras.callbacks import Callback
+from .augment import augment
+from .network import Network
+from .network import ExportNetwork
+from .metrics import compute_metrics
+from .metrics import compute_class_metrics
 from .manifest import Manifest
+
+#
+# Type: EpochCallback
+# Since: 2.0.0
+#
+# Called after each epoch with the zero-based epoch index and its logs
+# (loss, accuracy, precision, recall, roc_auc, pr_auc, their val_ variants
+# and lr).
+#
+
+EpochCallback = Callable[[int, Dict[str, float]], None]
+
+#
+# Constants
+#
+
+EARLY_STOP_PATIENCE  = 15
+EARLY_STOP_MIN_DELTA = 0.001
 
 #
 # Class: Record
@@ -55,6 +77,9 @@ class Model:
         seed: int
     ) -> None:
 
+        if image_chan != 3:
+            raise ValueError(f"Only RGB images are supported, got {image_chan} channel(s).")
+
         self.weights_path = weights_path
         self.manifest_path = manifest_path
         self.image_size = image_size
@@ -63,6 +88,9 @@ class Model:
         self.dropout_rate = dropout_rate
         self.freeze_backbone = freeze_backbone
         self.seed = seed
+
+        self.device = select_device()
+        self.generator = torch.Generator().manual_seed(seed)
 
         self.manifest = Manifest(manifest_path)
 
@@ -76,50 +104,51 @@ class Model:
     # Since: 1.0.0
     #
 
-    def train(self,
-        epochs: int,
-        callback: Callback,
-        checkpoints_path: Path,
-        tensorboard_path: Path
-    ) -> None:
+    def train(self, epochs: int, callback: EpochCallback, checkpoints_path: Path) -> None:
 
-        callbacks: List[Callback] = [
+        best_score = -math.inf
+        best_state = None
+        wait = 0
 
-            keras.callbacks.ModelCheckpoint(
-               	monitor="val_accuracy",
-               	mode="max",
-               	save_best_only=True,
-               	filepath=str(checkpoints_path)
-            ),
+        for epoch in range(epochs):
 
-            keras.callbacks.EarlyStopping(
-               	monitor="val_accuracy",
-               	mode="max",
-               	patience=15,
-               	min_delta=0.001,
-               	restore_best_weights=True
-            ),
+            train_loss, train_prob = self.fit_epoch()
+            valid_loss, valid_prob = self.evaluate(self.valid_x, self.valid_y)
 
-            keras.callbacks.ReduceLROnPlateau(
-               	monitor="val_loss",
-               	factor=0.5,
-               	patience=5,
-               	cooldown=2,
-               	min_lr=3e-6,
-               	verbose=1,
-            ),
+            train_metrics = compute_metrics(self.train_y.numpy(), train_prob)
+            valid_metrics = compute_metrics(self.valid_y.numpy(), valid_prob)
 
-            keras.callbacks.TensorBoard(log_dir=str(tensorboard_path)),
+            self.scheduler.step(valid_loss)
 
-        ] + [callback]
+            logs: Dict[str, float] = {"loss": train_loss, **train_metrics, "val_loss": valid_loss}
 
-        self.model.fit(
-            self.train_ds,
-            validation_data=self.valid_ds,
-            epochs=epochs,
-            callbacks=callbacks,
-            verbose=0
-        )
+            for key, val in valid_metrics.items():
+                logs[f"val_{key}"] = val
+
+            logs["lr"] = self.optimizer.param_groups[0]["lr"]
+
+            #
+            # Early stopping on validation accuracy. The best weights are
+            # checkpointed and restored when training ends.
+            #
+
+            score = valid_metrics["accuracy"]
+
+            if score - EARLY_STOP_MIN_DELTA > best_score:
+                best_score = score
+                best_state = copy.deepcopy(self.network.state_dict())
+                torch.save(best_state, checkpoints_path)
+                wait = 0
+            else:
+                wait += 1
+
+            callback(epoch, logs)
+
+            if wait >= EARLY_STOP_PATIENCE:
+                break
+
+        if best_state is not None:
+            self.network.load_state_dict(best_state)
 
     #
     # Method: valid
@@ -128,116 +157,74 @@ class Model:
 
     def valid(self) -> Tuple[Dict[str, float], Dict[int, Dict[str, Any]]]:
 
-        metrics = self.model.evaluate(
-            self.valid_ds,
-            return_dict=True,
-            verbose=0
-        )
+        loss, y_prob = self.evaluate(self.valid_x, self.valid_y)
+        y_true = self.valid_y.numpy()
 
-        loss      = float(metrics.get("loss",      np.nan))
-        accuracy  = float(metrics.get("accuracy",  np.nan))
-        precision = float(metrics.get("precision", np.nan))
-        recall    = float(metrics.get("recall",    np.nan))
-        roc_auc   = float(metrics.get("roc_auc",   np.nan))
-        pr_auc    = float(metrics.get("pr_auc",    np.nan))
+        metrics = compute_metrics(y_true, y_prob)
+
+        precision = metrics["precision"]
+        recall    = metrics["recall"]
         f1        = float("nan")
 
-        if np.isfinite(precision) and np.isfinite(recall) and (precision + recall) > 0:
+        if (precision + recall) > 0:
             f1 = float(2.0 * precision * recall / (precision + recall))
 
         data = {
-            "loss":      round(loss,      6),
-            "accuracy":  round(accuracy,  6),
-            "precision": round(precision, 6),
-            "recall":    round(recall,    6),
-            "rocAuc":    round(roc_auc,   6),
-            "prAuc":     round(pr_auc,    6),
-            "f1":        round(f1,        6),
+            "loss":      round(loss,                 6),
+            "accuracy":  round(metrics["accuracy"],  6),
+            "precision": round(precision,            6),
+            "recall":    round(recall,               6),
+            "rocAuc":    round(metrics["roc_auc"],   6),
+            "prAuc":     round(metrics["pr_auc"],    6),
+            "f1":        round(f1,                   6),
         }
 
-        class_data = self.valid_per_class()
-
-        return data, class_data
-
-    #
-    # Method: valid_per_class
-    # Since: 1.0.0
-    #
-
-    def valid_per_class(self) -> Dict[int, Dict[str, Any]]:
-
-        y_true = np.concatenate([y.numpy() for _, y in self.valid_ds], axis=0)
-        y_prob = self.model.predict(self.valid_ds, verbose=0)
-        y_pred = (y_prob >= 0.5).astype(np.float32)
-
-        data: Dict[int, Dict[str, Any]] = {}
-
-        for index in range(self.num_classes):
-
-            true = y_true[:, index]
-            pred = y_pred[:, index]
-
-            tp = float(np.sum((true == 1) & (pred == 1)))
-            fp = float(np.sum((true == 0) & (pred == 1)))
-            fn = float(np.sum((true == 1) & (pred == 0)))
-
-            support = int(np.sum(true == 1))
-
-            precision = tp / (tp + fp) if (tp + fp) > 0 else float("nan")
-            recall    = tp / (tp + fn) if (tp + fn) > 0 else float("nan")
-            f1        = float("nan")
-
-            if np.isfinite(precision) and np.isfinite(recall) and (precision + recall) > 0:
-                f1 = 2.0 * precision * recall / (precision + recall)
-
-            entry: Dict[str, Any] = {"support": support}
-
-            # NaN can't round-trip through JSON, so metrics that are
-            # undefined for this class (e.g. no validation support) are
-            # left out rather than emitted as an unparsable token.
-            if np.isfinite(precision):
-                entry["precision"] = round(precision, 6)
-
-            if np.isfinite(recall):
-                entry["recall"] = round(recall, 6)
-
-            if np.isfinite(f1):
-                entry["f1"] = round(f1, 6)
-
-            data[index] = entry
-
-        return data
+        return data, compute_class_metrics(y_true, y_prob)
 
     #
     # Method: export
     # Since: 1.0.0
     #
+    # Exports an ONNX model taking a (1, H, W, 3) float32 image in the 0..255
+    # range and returning one sigmoid probability per label. The export is
+    # checked against PyTorch on validation images before it's returned.
+    #
 
-    def export(
-        self,
-        quantization: str,
-        filepath: Path,
-        filename: str,
-    ) -> Path:
+    def export(self, quantization: str, filepath: Path, filename: str) -> Path:
+
+        import onnx
 
         filepath.mkdir(parents=True, exist_ok=True)
 
-        converter = tf.lite.TFLiteConverter.from_keras_model(self.model)
+        if quantization not in ("fp32", "fp16"):
+            raise ValueError(f"Unsupported quantization: {quantization}.")
 
-        if quantization == "fp32":
-            filename = f"{filename}_fp32.tflite"
-            converter.optimizations = [tf.lite.Optimize.DEFAULT]
-            converter.target_spec.supported_types = [tf.float32]
+        path = filepath / f"{filename}_{quantization}.onnx"
 
-        if quantization == "fp16":
-            filename = f"{filename}_fp16.tflite"
-            converter.optimizations = [tf.lite.Optimize.DEFAULT]
-            converter.target_spec.supported_types = [tf.float16]
+        reference = ExportNetwork(copy.deepcopy(self.network).cpu()).eval()
 
-        model = converter.convert()
+        # Input and output stay float32 whatever the quantization, so
+        # runtimes feed the same tensor to every variant.
+        network = ExportNetwork(copy.deepcopy(self.network).cpu(), half=quantization == "fp16").eval()
 
-        path = filepath / filename
-        path.write_bytes(model)
+        sample = torch.zeros(1, self.image_size, self.image_size, self.image_chan)
+
+        program = torch.onnx.export(
+            network,
+            (sample,),
+            dynamo=True,
+            input_names=["input"],
+            output_names=["output"],
+        )
+
+        program.optimize()
+
+        model = program.model_proto
+
+        onnx.checker.check_model(model)
+        onnx.save(model, str(path))
+
+        self.verify(path, reference, tolerance=1e-4 if quantization == "fp32" else 2e-2)
 
         return path
 
@@ -291,8 +278,14 @@ class Model:
                 f"({len(records)} labeled image(s) found). Confirm more annotations and try again."
             )
 
-        self.train_ds = self.dataset(train_records, self.image_size, self.batch_size, self.num_classes, augment=True)
-        self.valid_ds = self.dataset(valid_records, self.image_size, self.batch_size, self.num_classes, augment=False)
+        #
+        # Decodes every image once, up front. Images are small after the
+        # resize (150 KB at 224px) so the whole set stays in memory and
+        # epochs never touch the disk.
+        #
+
+        self.train_x, self.train_y = self.dataset(train_records)
+        self.valid_x, self.valid_y = self.dataset(valid_records)
 
         self.split_stats = {
             "total": len(records),
@@ -300,6 +293,7 @@ class Model:
             "valid": len(valid_records),
             "trainPerClass": count_per_class(train_records),
             "validPerClass": count_per_class(valid_records),
+            "device": str(self.device),
         }
 
     #
@@ -310,122 +304,25 @@ class Model:
 
     def compile(self) -> None:
 
-        #
-        # Creates the bacbone.
-        # Uses the mobilenet feature extractor without the final
-        # classification head.
-        #
+        self.network = Network(
+            weights_path=self.weights_path,
+            num_classes=self.num_classes,
+            dropout_rate=self.dropout_rate,
+            freeze_backbone=self.freeze_backbone
+        ).to(self.device)
 
-        backbone = tf.keras.applications.MobileNetV2(
+        params = [p for p in self.network.parameters() if p.requires_grad]
 
-            input_shape=(
-                self.image_size,
-                self.image_size,
-                self.image_chan
-            ),
+        self.optimizer = torch.optim.Adam(params, lr=1e-3)
 
-            include_top=False,
-
-            weights=None
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer,
+            mode="min",
+            factor=0.5,
+            patience=5,
+            cooldown=2,
+            min_lr=3e-6,
         )
-
-        backbone.load_weights(str(self.weights_path))
-
-        #
-        # Freezes the backbone.
-        # Prevent the model from updating weights during training
-        # because we're using a small dataset.
-        #
-
-        if self.freeze_backbone:
-            backbone.trainable = False
-
-        #
-        # Creates the input layer.
-        # Defines the shape of the input tensor.
-        #
-
-        inputs = layers.Input(
-            shape=(
-                self.image_size,
-                self.image_size,
-                self.image_chan
-            )
-        )
-
-        #
-        # Creates the augmentation pipeline layer.
-        # Adds random varations to the images to make the model more robust.
-        #
-
-        x = keras.Sequential([
-             layers.RandomFlip("horizontal"),
-             layers.RandomZoom(0.1,               fill_mode="reflect"),
-             layers.RandomRotation(0.03,          fill_mode="reflect"),
-             layers.RandomTranslation(0.05, 0.05, fill_mode="reflect"),
-             layers.RandomContrast(0.2),
-         ], name="augmentation")(inputs)
-
-        #
-        # Creates the preprocessing layer.
-        # The model expect input in a specific numeric range and format.
-        #
-
-        x = layers.Lambda(tf.keras.applications.mobilenet_v2.preprocess_input, name="preprocess")(x)
-
-        #
-        # Set the backbone in inference mode.
-        # This is critical on tiny datasets.
-        #
-
-        x = backbone(x, training=False)
-
-        #
-        # Creates the global average pooling layer.
-        # This gives a compact per-image feature vector.
-        #
-
-        x = layers.GlobalAveragePooling2D()(x)
-
-        #
-        # Creates the dropout layer.
-        # Acts as regularization and reduces overfitting.
-        #
-
-        if self.dropout_rate > 0:
-            x = layers.Dropout(self.dropout_rate)(x)
-
-        #
-        # Creates the sigmoid layer.
-        # Each output neuron is an independent probability, since an image
-        # can carry more than one label at once.
-        #
-
-        outputs = layers.Dense(self.num_classes, activation="sigmoid")(x)
-
-        #
-        # Creates and compile the model.
-        #
-
-        model = keras.Model(
-            inputs,
-            outputs,
-            name="mobilenetv2_classifier"
-        )
-
-        model.compile(
-            optimizer=keras.optimizers.legacy.Adam(learning_rate=1e-3),
-            loss=keras.losses.BinaryCrossentropy(label_smoothing=0.0),
-            metrics=[
-                keras.metrics.BinaryAccuracy(name="accuracy"),
-                keras.metrics.Precision(name="precision"),
-                keras.metrics.Recall(name="recall"),
-                keras.metrics.AUC(curve="ROC", name="roc_auc"),
-                keras.metrics.AUC(curve="PR", name="pr_auc"),
-            ],
-        )
-
-        self.model = model
 
     #
     # Method: dataset
@@ -433,55 +330,135 @@ class Model:
     # Hidden
     #
 
-    def dataset(
-        self,
-        records: List[Record],
-        image_size: int,
-        batch_size: int,
-        num_classes: int,
-        augment: bool
-    ) -> Any:
+    def dataset(self, records: List[Record]) -> Tuple[torch.Tensor, torch.Tensor]:
 
-        images = [s.image for s in records]
+        labels = torch.zeros((len(records), self.num_classes), dtype=torch.float32)
 
-        labels = np.zeros((len(records), num_classes), dtype=np.float32)
-
-        for i, s in enumerate(records):
-            for label in s.labels:
+        for i, record in enumerate(records):
+            for label in record.labels:
                 labels[i, label] = 1.0
 
-        dataset = tf.data.Dataset.from_tensor_slices((images, labels))
+        with ThreadPoolExecutor() as pool:
+            images = list(pool.map(lambda r: decode(r.image, self.image_size), records))
 
-        def mapper(image_data, y):
+        return torch.stack(images), labels
 
-            image = decode(
-                image_data,
-                image_size
-            )
+    #
+    # Method: fit_epoch
+    # Since: 2.0.0
+    # Hidden
+    #
 
-            if augment:
-                image = jitter(image)
+    def fit_epoch(self) -> Tuple[float, np.ndarray]:
 
-            return image, y
+        self.network.train()
 
-        # Deterministic pipeline: single-threaded map, prefetch(1)
-        dataset = dataset.map(mapper, num_parallel_calls=1)
-        dataset = dataset.batch(batch_size)
-        dataset = dataset.prefetch(1)
+        n = self.train_x.shape[0]
 
-        opts = tf.data.Options()
-        opts.experimental_deterministic = True
-        opts.threading.private_threadpool_size = 1
-        dataset = dataset.with_options(opts)
+        order = torch.randperm(n, generator=self.generator)
+        probs = np.zeros((n, self.num_classes), dtype=np.float32)
+        total = 0.0
 
-        return dataset
+        for start in range(0, n, self.batch_size):
+
+            index = order[start:start + self.batch_size]
+
+            x = self.train_x[index].to(self.device).float()
+            y = self.train_y[index].to(self.device)
+
+            x = augment(x, self.generator)
+
+            logits = self.network(x)
+            loss = F.binary_cross_entropy_with_logits(logits, y)
+
+            self.optimizer.zero_grad(set_to_none=True)
+            loss.backward()
+            self.optimizer.step()
+
+            total += float(loss.detach()) * len(index)
+            probs[index.numpy()] = torch.sigmoid(logits.detach()).cpu().numpy()
+
+        return total / n, probs
+
+    #
+    # Method: evaluate
+    # Since: 2.0.0
+    # Hidden
+    #
+
+    @torch.inference_mode()
+    def evaluate(self, images: torch.Tensor, labels: torch.Tensor) -> Tuple[float, np.ndarray]:
+
+        self.network.eval()
+
+        n = images.shape[0]
+
+        probs: List[np.ndarray] = []
+        total = 0.0
+
+        for start in range(0, n, self.batch_size):
+
+            x = images[start:start + self.batch_size].to(self.device).float()
+            y = labels[start:start + self.batch_size].to(self.device)
+
+            logits = self.network(x)
+
+            total += float(F.binary_cross_entropy_with_logits(logits, y, reduction="sum")) / self.num_classes
+            probs.append(torch.sigmoid(logits).cpu().numpy())
+
+        return total / n, np.concatenate(probs, axis=0)
+
+    #
+    # Method: verify
+    # Since: 2.0.0
+    # Hidden
+    #
+    # Runs validation images through ONNX Runtime and PyTorch and fails the
+    # export if they disagree. Catches layout, preprocessing and conversion
+    # regressions before a model ever reaches the browser or OBS.
+    #
+
+    @torch.inference_mode()
+    def verify(self, path: Path, network: ExportNetwork, tolerance: float) -> None:
+
+        import onnxruntime as ort
+
+        session = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
+
+        for image in self.valid_x[:16]:
+
+            x = image.unsqueeze(0).float()
+
+            expected = network(x).numpy()
+            received = session.run(None, {"input": x.numpy()})[0]
+
+            diff = float(np.max(np.abs(expected - received)))
+
+            if diff > tolerance:
+                raise RuntimeError(f"Exported model differs from PyTorch by {diff:.6f} (tolerance {tolerance}).")
 
 # ------------------------------------------------------------------------------
 # Private API
 # ------------------------------------------------------------------------------
 
 #
-# Method: split
+# Function: select_device
+# Since: 2.0.0
+# Hidden
+#
+
+def select_device() -> torch.device:
+
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+
+    return torch.device("cpu")
+
+#
+# Function: split
 # Since: 1.0.0
 # Hidden
 #
@@ -532,33 +509,21 @@ def count_per_class(records: List[Record]) -> Dict[int, int]:
     return dict(counts)
 
 #
-# Function: jitter
-# Since: 1.0.0
-# Hidden
-#
-# Randomly shifts the colors of an image so the model learns shapes rather
-# than one specific palette (e.g. a single character skin or outfit). Runs in
-# the dataset pipeline instead of the model so it never reaches the exported
-# TFLite file.
-#
-
-def jitter(image: tf.Tensor) -> tf.Tensor:
-	image = image / 255.0
-	image = tf.image.random_hue(image, 0.05)
-	image = tf.image.random_saturation(image, 0.7, 1.3)
-	image = tf.image.random_brightness(image, 0.15)
-	image = tf.clip_by_value(image, 0.0, 1.0)
-	return image * 255.0
-
-#
 # Function: decode
 # Since: 1.0.0
 # Hidden
 #
+# Returns a (H, W, 3) uint8 tensor. The resize is a plain half-pixel
+# bilinear, without antialiasing, the same sampling the OBS plugin uses on
+# live frames.
+#
 
-def decode(path: tf.Tensor, image_size: int) -> tf.Tensor:
-	bytes = tf.io.read_file(path)
-	image = tf.image.decode_image(bytes, channels=3, expand_animations=False)
-	image.set_shape([None, None, 3])
-	image = tf.image.resize(image, [image_size, image_size])
-	return tf.cast(image, tf.float32)  # 0..255
+def decode(path: str, image_size: int) -> torch.Tensor:
+
+    with Image.open(path) as image:
+        array = np.asarray(image.convert("RGB"))
+
+    x = torch.from_numpy(array.copy()).permute(2, 0, 1).unsqueeze(0).float()
+    x = F.interpolate(x, size=(image_size, image_size), mode="bilinear", align_corners=False, antialias=False)
+
+    return x.squeeze(0).permute(1, 2, 0).round().clamp(0, 255).to(torch.uint8)

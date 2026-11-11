@@ -10,15 +10,15 @@ Get the latest build from [breezy.stream](https://breezy.stream) or from the [Re
 
 | Platform | Training backend |
 |---|---|
-| macOS 12+ (Apple Silicon) | TensorFlow Metal |
-| Windows 10 1709+ (x64) | TensorFlow DirectML (any DirectX 12 GPU, CPU fallback) |
+| macOS 12+ (Apple Silicon) | PyTorch MPS |
+| Windows 10+ (x64) | PyTorch CUDA (NVIDIA GPU, CPU fallback) |
 
 ## How it works
 
 1. The app opens `my.breezy.stream` in an Electron window.
 2. When you start a training in the console, the app downloads the model's labeled images through the Breezy API.
-3. A bundled Python environment fine-tunes MobileNetV2 (transfer learning), validates it and exports it to TensorFlow Lite.
-4. The `.tflite` model and its metrics are uploaded back to your account, ready to load in OBS.
+3. A bundled Python environment fine-tunes MobileNetV2 (transfer learning), validates it and exports it to ONNX. The export is checked against PyTorch on validation images before it's kept.
+4. The `.onnx` model and its metrics are uploaded back to your account, ready to load in OBS.
 
 The web page talks to the app through a small IPC bridge (`window.electron`, see [src/preload.ts](src/preload.ts)). The training channels live in [src/object-classification/main.ts](src/object-classification/main.ts).
 

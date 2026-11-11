@@ -1,14 +1,14 @@
 #!/bin/bash
 
 #
-# Builds python/win, a minimal TensorFlow (DirectML) environment for object
+# Builds python/win, a minimal PyTorch (CUDA) environment for object
 # classification. Run from the project root inside Git Bash with miniforge
 # installed.
 #
 #   bash ./scripts/python-env/create-env-win.sh
 #
-# DirectML uses any DirectX 12 GPU (NVIDIA, AMD, Intel) on Windows 10 1709+.
-# Without one, training runs on the CPU.
+# CUDA runs on NVIDIA GPUs with a recent driver. Without one, training runs
+# on the CPU.
 #
 
 set -e
@@ -20,7 +20,7 @@ OUT=python/win
 eval "$(conda shell.bash hook)"
 
 conda remove -n $ENV --all --yes > /dev/null 2>&1 || true
-conda create -n $ENV --yes -c conda-forge python=3.10 conda-pack
+conda create -n $ENV --yes -c conda-forge python=3.12 conda-pack
 conda activate $ENV
 
 python -m pip install --no-cache-dir -r "$DIR/requirements-win.txt"
@@ -43,6 +43,6 @@ bash "$DIR/prune-env.sh" $OUT
 # timestamps during packaging.
 $OUT/python.exe -m compileall -q -j 0 --invalidation-mode unchecked-hash $OUT/Lib || true
 
-# Verify, this should list the GPU on a machine with a DirectX 12 GPU
+# Verify, this should report cuda on a machine with an NVIDIA GPU
 PATH="$(pwd)/$OUT:$(pwd)/$OUT/Library/bin:$PATH" $OUT/python.exe "$DIR/verify-env.py"
 du -sh $OUT

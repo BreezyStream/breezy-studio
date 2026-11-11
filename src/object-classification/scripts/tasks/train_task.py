@@ -1,8 +1,8 @@
+from typing import Any
+from typing import Dict
 from task import Task
 from model import Model
 from model import Config
-
-from tensorflow.keras.callbacks import Callback
 
 #
 # Class: TrainTask
@@ -37,8 +37,7 @@ class TrainTask(Task):
 
 	def execute(self, config: Config) -> None:
 
-		checkpoints_path = config.root_dir / "ckpt_best.keras"
-		tensorboard_path = config.root_dir / "tb"
+		checkpoints_path = config.root_dir / "ckpt_best.pt"
 
 		self.epochs = config.epochs
 
@@ -50,7 +49,6 @@ class TrainTask(Task):
 		self.model.train(
 			epochs=self.epochs,
 			checkpoints_path=checkpoints_path,
-			tensorboard_path=tensorboard_path,
 			callback=TrainCallback(self)
 		)
 
@@ -59,19 +57,18 @@ class TrainTask(Task):
 # Since: 1.0.0
 #
 
-class TrainCallback(Callback):
+class TrainCallback:
 
 	# -------------------------------------------------------------------------
 	# Methods
 	# -------------------------------------------------------------------------
 
 	def __init__(self, task: Task):
-		super().__init__()
 		self.task = task
 
 	# -------------------------------------------------------------------------
 
-	def on_epoch_end(self, epoch, logs=None):
+	def __call__(self, epoch: int, logs: Dict[str, float]) -> None:
 
 		logs = logs or {}
 

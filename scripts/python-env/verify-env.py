@@ -1,33 +1,41 @@
 #
 # Smoke test for a packed environment: imports what the training script uses,
-# runs a training step and a TFLite export, and reports the GPU.
+# runs a training step and an ONNX export, and reports the device.
 #
 
 import os
+import tempfile
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
-import h5py
 import numpy as np
-import tensorflow as tf
-from tensorflow import keras
+import torch
+import torchvision
+import onnx
+import onnxruntime as ort
+from PIL import Image
 
-print("tensorflow", tf.__version__)
-print("gpus", tf.config.list_physical_devices("GPU"))
+device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 
-model = keras.Sequential([
-    keras.layers.Input((64, 64, 3)),
-    keras.layers.Conv2D(8, 3, activation="relu"),
-    keras.layers.GlobalAveragePooling2D(),
-    keras.layers.Dense(2, activation="sigmoid"),
-])
+print("torch", torch.__version__, "torchvision", torchvision.__version__, "onnxruntime", ort.__version__)
+print("device", device, torch.cuda.get_device_name(0) if device == "cuda" else "")
 
-model.compile(optimizer=keras.optimizers.legacy.Adam(), loss="binary_crossentropy")
-model.fit(np.random.rand(8, 64, 64, 3), np.random.randint(0, 2, (8, 2)), epochs=1, verbose=0)
+model = torchvision.models.mobilenet_v2(weights=None, num_classes=2).to(device)
+optimizer = torch.optim.Adam(model.parameters())
 
-converter = tf.lite.TFLiteConverter.from_keras_model(model)
-converter.optimizations = [tf.lite.Optimize.DEFAULT]
-converter.target_spec.supported_types = [tf.float16]
-converter.convert()
+x = torch.rand(8, 3, 64, 64, device=device)
+y = torch.randint(0, 2, (8, 2), device=device).float()
+
+loss = torch.nn.functional.binary_cross_entropy_with_logits(model(x), y)
+loss.backward()
+optimizer.step()
+
+model = model.cpu().eval()
+
+with tempfile.TemporaryDirectory() as dir:
+    path = os.path.join(dir, "model.onnx")
+    onnx.save(torch.onnx.export(model, (torch.rand(1, 3, 64, 64),), dynamo=True).model_proto, path)
+    session = ort.InferenceSession(path, providers=["CPUExecutionProvider"])
+    session.run(None, {session.get_inputs()[0].name: np.random.rand(1, 3, 64, 64).astype(np.float32)})
 
 print("ok")

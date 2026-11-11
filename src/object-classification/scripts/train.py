@@ -14,11 +14,14 @@ from tasks import ExportTask
 # Environment
 #-------------------------------------------------------------------------------
 
-os.environ["TF_DISABLE_JIT"] = "1"
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+# Ops MPS doesn't implement fall back to the CPU instead of failing.
+os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+
+# Required by deterministic cuBLAS kernels.
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
 import numpy as np
-import tensorflow as tf
+import torch
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
@@ -26,23 +29,16 @@ SEED = 6673
 
 random.seed(SEED)
 np.random.seed(SEED)
-tf.random.set_seed(SEED)
+torch.manual_seed(SEED)
 
 # ------------------------------------------------------------------------------
 # Configuration
 # ------------------------------------------------------------------------------
 
-try:
-    tf.config.experimental.enable_op_determinism(True)
-except Exception:
-    pass
+# Same inputs, same model. Ops without a deterministic kernel only warn.
+torch.use_deterministic_algorithms(True, warn_only=True)
 
-try:
-    tf.config.optimizer.set_jit(False)
-except Exception:
-    pass
-
-tf.get_logger().setLevel(logging.ERROR)
+logging.getLogger("torch.onnx").setLevel(logging.ERROR)
 
 # ------------------------------------------------------------------------------
 # Main
@@ -67,7 +63,7 @@ def main() -> None:
     config.root_dir.mkdir(parents=True, exist_ok=True)
     config.dist_dir.mkdir(parents=True, exist_ok=True)
 
-    weights_path = SCRIPT_DIR / "weights/mobilenet_v2_weights_tf_dim_ordering_tf_kernels_1.0_224_no_top.h5"
+    weights_path = SCRIPT_DIR / "weights/mobilenet_v2-b0353104.pth"
 
     model = Model(
         weights_path=weights_path,

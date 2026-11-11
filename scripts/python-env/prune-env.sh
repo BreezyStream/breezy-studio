@@ -2,9 +2,8 @@
 
 #
 # Removes what a packed environment doesn't need at runtime: headers, docs,
-# build tools, debug symbols, the stdlib GUI/test modules and TensorFlow's
-# unused libclang dependency. Package "test" folders are kept, TensorFlow
-# imports some of them.
+# build tools, debug symbols, the stdlib GUI/test modules and PyTorch's
+# C++ headers. Package "test" folders are kept, some packages import them.
 #
 #   bash ./scripts/python-env/prune-env.sh python/mac
 #
@@ -16,7 +15,7 @@ OUT=$1
 if [ -f "$OUT/python.exe" ]; then
 	LIB=$OUT/Lib
 else
-	LIB=$OUT/lib/python3.10
+	LIB=$OUT/lib/python3.12
 fi
 
 SP=$LIB/site-packages
@@ -44,8 +43,8 @@ rm -rf \
 
 rm -rf \
 	"$SP/pip" "$SP"/pip-*.dist-info \
-	"$SP/clang" "$SP"/libclang-*.dist-info \
-	"$SP/tensorflow/include"
+	"$SP/torch/include" \
+	"$SP/torch/share/cmake"
 
 find "$OUT" -type f \( -name "*.pdb" -o -name "*.a" -o -name "*.lib" \) -delete
 

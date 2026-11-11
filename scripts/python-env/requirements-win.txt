@@ -1,7 +1,11 @@
-# Object classification only (MobileNetV2 transfer learning + TFLite export).
-# The DirectML plugin runs TensorFlow on any DirectX 12 GPU (NVIDIA, AMD,
-# Intel) and requires tensorflow-cpu 2.10.0 exactly. Without a compatible GPU,
-# training runs on the CPU.
-tensorflow-cpu==2.10.0
-tensorflow-directml-plugin==0.4.0.dev230202
-numpy==1.23.5
+# Object classification only (MobileNetV2 transfer learning + ONNX export).
+# CUDA 13.2 wheels, required by Blackwell GPUs (RTX 50 series) and
+# compatible with older NVIDIA GPUs. Without one, training runs on the CPU.
+--extra-index-url https://download.pytorch.org/whl/cu132
+torch==2.14.1+cu132
+torchvision==0.29.1+cu132
+onnx==1.23.2
+onnxscript==0.7.2
+onnxruntime==1.31.1
+numpy==2.5.4
+pillow==13.0.0
