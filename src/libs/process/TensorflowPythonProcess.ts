@@ -56,6 +56,12 @@ export class TensorflowPythonProcess extends EventEmitter {
 			PYTHONNOUSERSITE: '1',
 			PYTHONDONTWRITEBYTECODE: '1',
 			PYTHONUNBUFFERED: '1',
+
+			// Windows pipes default to the system code page, which can't
+			// encode the characters some libraries print (e.g. the ONNX
+			// exporter's ✅), and the print raises.
+			PYTHONUTF8: '1',
+			PYTHONIOENCODING: 'utf-8',
 		}
 
 		this.process = spawn(exePath, [path.join(process.env.resources, ...this.exec), ...this.args], { env, cwd })
