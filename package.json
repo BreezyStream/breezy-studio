@@ -20,7 +20,8 @@
 		"release:win": "npm run build && electron-builder --win --publish always",
 		"dist": "electron-builder",
 		"codegen": "NODE_TLS_REJECT_UNAUTHORIZED=0 graphql-codegen",
-		"codegen:watch": "NODE_TLS_REJECT_UNAUTHORIZED=0 graphql-codegen --watch"
+		"codegen:watch": "NODE_TLS_REJECT_UNAUTHORIZED=0 graphql-codegen --watch",
+		"tidy": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --fix"
 	},
 	"build": {
 		"appId": "stream.breezy.studio",
@@ -127,10 +128,13 @@
 		"@types/node": "^26.1.1",
 		"@types/node-fetch": "^2.6.13",
 		"@types/progress-stream": "^2.0.5",
+		"@typescript-eslint/parser": "^8.73.0",
 		"chokidar": "^5.0.0",
 		"concurrently": "^10.0.3",
 		"electron": "^43.1.1",
 		"electron-builder": "^26.15.3",
+		"eslint": "^10.15.0",
+		"eslint-plugin-unused-imports": "^4.4.1",
 		"tsc-alias": "^1.9.1",
 		"typescript": "^6.0.3"
 	},
