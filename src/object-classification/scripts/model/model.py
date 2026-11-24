@@ -47,6 +47,7 @@ EARLY_STOP_MIN_DELTA = 0.001
 @dataclass(frozen=True)
 class Record:
     labels: Tuple[int, ...]
+    ignore: Tuple[int, ...]
     image: str
 
 #
@@ -113,10 +114,10 @@ class Model:
         for epoch in range(epochs):
 
             train_loss, train_prob = self.fit_epoch()
-            valid_loss, valid_prob = self.evaluate(self.valid_x, self.valid_y)
+            valid_loss, valid_prob = self.evaluate(self.valid_x, self.valid_y, self.valid_m)
 
-            train_metrics = compute_metrics(self.train_y.numpy(), train_prob)
-            valid_metrics = compute_metrics(self.valid_y.numpy(), valid_prob)
+            train_metrics = compute_metrics(self.train_y.numpy(), train_prob, self.train_m.numpy())
+            valid_metrics = compute_metrics(self.valid_y.numpy(), valid_prob, self.valid_m.numpy())
 
             self.scheduler.step(valid_loss)
 
@@ -157,10 +158,11 @@ class Model:
 
     def valid(self) -> Tuple[Dict[str, float], Dict[int, Dict[str, Any]]]:
 
-        loss, y_prob = self.evaluate(self.valid_x, self.valid_y)
+        loss, y_prob = self.evaluate(self.valid_x, self.valid_y, self.valid_m)
         y_true = self.valid_y.numpy()
+        y_mask = self.valid_m.numpy()
 
-        metrics = compute_metrics(y_true, y_prob)
+        metrics = compute_metrics(y_true, y_prob, y_mask)
 
         precision = metrics["precision"]
         recall    = metrics["recall"]
@@ -179,7 +181,7 @@ class Model:
             "f1":        round(f1,                   6),
         }
 
-        return data, compute_class_metrics(y_true, y_prob)
+        return data, compute_class_metrics(y_true, y_prob, y_mask)
 
     #
     # Method: export
@@ -253,7 +255,7 @@ class Model:
 
             label_ids = set()
 
-            for annotation in image.get("annotations", []):
+            for annotation in image.get("trainableAnnotations", []):
 
                 label = labels.get(annotation["label"])
 
@@ -265,8 +267,17 @@ class Model:
             if not label_ids:
                 continue
 
+            # Labels awaiting confirmation on this image are neither present
+            # nor absent, they're masked out of the loss and the metrics.
+            ignored_ids = {
+                int(labels[annotation["label"]]["id"])
+                for annotation in image.get("ignoredAnnotations", [])
+                if annotation["label"] in labels
+            }
+
             records.append(Record(
                 labels=tuple(sorted(label_ids)),
+                ignore=tuple(sorted(ignored_ids - label_ids)),
                 image=str(image["filepath"])
             ))
 
@@ -284,8 +295,8 @@ class Model:
         # epochs never touch the disk.
         #
 
-        self.train_x, self.train_y = self.dataset(train_records)
-        self.valid_x, self.valid_y = self.dataset(valid_records)
+        self.train_x, self.train_y, self.train_m = self.dataset(train_records)
+        self.valid_x, self.valid_y, self.valid_m = self.dataset(valid_records)
 
         self.split_stats = {
             "total": len(records),
@@ -330,18 +341,23 @@ class Model:
     # Hidden
     #
 
-    def dataset(self, records: List[Record]) -> Tuple[torch.Tensor, torch.Tensor]:
+    def dataset(self, records: List[Record]) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
 
         labels = torch.zeros((len(records), self.num_classes), dtype=torch.float32)
+        masks = torch.ones((len(records), self.num_classes), dtype=torch.float32)
 
         for i, record in enumerate(records):
+
             for label in record.labels:
                 labels[i, label] = 1.0
+
+            for label in record.ignore:
+                masks[i, label] = 0.0
 
         with ThreadPoolExecutor() as pool:
             images = list(pool.map(lambda r: decode(r.image, self.image_size), records))
 
-        return torch.stack(images), labels
+        return torch.stack(images), labels, masks
 
     #
     # Method: fit_epoch
@@ -358,6 +374,7 @@ class Model:
         order = torch.randperm(n, generator=self.generator)
         probs = np.zeros((n, self.num_classes), dtype=np.float32)
         total = 0.0
+        count = 0.0
 
         for start in range(0, n, self.batch_size):
 
@@ -365,20 +382,23 @@ class Model:
 
             x = self.train_x[index].to(self.device).float()
             y = self.train_y[index].to(self.device)
+            m = self.train_m[index].to(self.device)
 
             x = augment(x, self.generator)
 
             logits = self.network(x)
-            loss = F.binary_cross_entropy_with_logits(logits, y)
+            weight = m.sum()
+            loss = masked_loss(logits, y, m).sum() / weight
 
             self.optimizer.zero_grad(set_to_none=True)
             loss.backward()
             self.optimizer.step()
 
-            total += float(loss.detach()) * len(index)
+            total += float(loss.detach()) * float(weight)
+            count += float(weight)
             probs[index.numpy()] = torch.sigmoid(logits.detach()).cpu().numpy()
 
-        return total / n, probs
+        return total / count, probs
 
     #
     # Method: evaluate
@@ -387,7 +407,7 @@ class Model:
     #
 
     @torch.inference_mode()
-    def evaluate(self, images: torch.Tensor, labels: torch.Tensor) -> Tuple[float, np.ndarray]:
+    def evaluate(self, images: torch.Tensor, labels: torch.Tensor, masks: torch.Tensor) -> Tuple[float, np.ndarray]:
 
         self.network.eval()
 
@@ -395,18 +415,21 @@ class Model:
 
         probs: List[np.ndarray] = []
         total = 0.0
+        count = 0.0
 
         for start in range(0, n, self.batch_size):
 
             x = images[start:start + self.batch_size].to(self.device).float()
             y = labels[start:start + self.batch_size].to(self.device)
+            m = masks[start:start + self.batch_size].to(self.device)
 
             logits = self.network(x)
 
-            total += float(F.binary_cross_entropy_with_logits(logits, y, reduction="sum")) / self.num_classes
+            total += float(masked_loss(logits, y, m).sum())
+            count += float(m.sum())
             probs.append(torch.sigmoid(logits).cpu().numpy())
 
-        return total / n, np.concatenate(probs, axis=0)
+        return total / count, np.concatenate(probs, axis=0)
 
     #
     # Method: verify
@@ -456,6 +479,17 @@ def select_device() -> torch.device:
         return torch.device("mps")
 
     return torch.device("cpu")
+
+#
+# Function: masked_loss
+# Since: 2.0.0
+# Hidden
+#
+# Binary cross-entropy of each (image, label) pair, zero for ignored pairs.
+#
+
+def masked_loss(logits: torch.Tensor, labels: torch.Tensor, masks: torch.Tensor) -> torch.Tensor:
+    return F.binary_cross_entropy_with_logits(logits, labels, reduction="none") * masks
 
 #
 # Function: split

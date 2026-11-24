@@ -25,7 +25,8 @@ export interface ObjectClassificationTrainManifestImageData {
 	filesize: number
 	createdAt: string
 	updatedAt: string
-	annotations: Array<ObjectClassificationTrainManifestAnnotationData>
+	ignoredAnnotations: Array<ObjectClassificationTrainManifestAnnotationData>
+	trainableAnnotations: Array<ObjectClassificationTrainManifestAnnotationData>
 }
 
 /**

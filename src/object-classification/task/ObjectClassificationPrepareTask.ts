@@ -7,8 +7,8 @@ import { TaskState } from 'libs/task/Task'
 import { ObjectClassificationTrainingTask } from 'object-classification/lib/task/ObjectClassificationTrainingTask'
 import { MyObjectClassificationModelImageCollectionQuery } from 'object-classification/main.generated'
 import { MyObjectClassificationModelLabelCollectionQuery } from 'object-classification/main.generated'
-import { ObjectClassificationModelData } from 'object-classification/main.generated'
 import { ObjectClassificationModelAnnotationData } from 'object-classification/main.generated'
+import { ObjectClassificationModelData } from 'object-classification/main.generated'
 import { ObjectClassificationModelImageData } from 'object-classification/main.generated'
 import { ObjectClassificationModelLabelData } from 'object-classification/main.generated'
 import { ObjectClassificationModelManifest } from 'object-classification/manifest/ObjectClassificationModelManifest'
@@ -398,7 +398,14 @@ export class ObjectClassificationPrepareTask extends ObjectClassificationTrainin
 	 * @hidden
 	 */
 	private getTrainImages() {
-		return this.images.map(image => ({ ...image, annotations: this.getTraintableAnnotations(image.annotations) })).filter(image => image.annotations.length > 0)
+
+		let images = this.images.map(({ annotations, ...image }) => ({
+			...image,
+			ignoredAnnotations: this.getIgnoredAnnotations(annotations),
+			trainableAnnotations: this.getTrainableAnnotations(annotations)
+		}))
+
+		return images.filter(image => image.trainableAnnotations.length > 0)
 	}
 
 	/**
@@ -452,7 +459,7 @@ export class ObjectClassificationPrepareTask extends ObjectClassificationTrainin
 	 * @since 1.0.0
 	 * @hidden
 	 */
-	private getTrainImagesMap(images: Array<ObjectClassificationModelImageData>, imagesMap: Dictionary<number>, labelsMap: Dictionary<number>) {
+	private getTrainImagesMap(images: Array<ObjectClassificationPrepareTaskImageData>, imagesMap: Dictionary<number>, labelsMap: Dictionary<number>) {
 
 		/*
 		 * Converts UUID to index based id for images.
@@ -461,15 +468,46 @@ export class ObjectClassificationPrepareTask extends ObjectClassificationTrainin
 		let manifest = this.modelManifest
 
 		/**
+		 * @function toImageMapAnnotation
+		 * @since 1.0.0
+		 * @hidden
+		 */
+		function toImageMapAnnotation(annotation: ObjectClassificationModelAnnotationData) {
+			return {
+				...annotation,
+				label: String(labelsMap[annotation.label.id])
+			}
+		}
+
+		/**
+		 * @function toImageMapIgnoredAnnotations
+		 * @since 1.0.0
+		 * @hidden
+		 */
+		function toImageMapIgnoredAnnotations(annotations: Array<ObjectClassificationModelAnnotationData>) {
+			return annotations.filter(annotation => labelsMap[annotation.label.id] != null).map(toImageMapAnnotation)
+		}
+
+		/**
+		 * @function toImageMapTrainableAnnotations
+		 * @since 1.0.0
+		 * @hidden
+		 */
+		function toImageMapTrainableAnnotations(annotations: Array<ObjectClassificationModelAnnotationData>) {
+			return annotations.map(toImageMapAnnotation)
+		}
+
+		/**
 		 * @function convert
 		 * @since 1.0.0
 		 * @hidden
 		 */
-		function convert(acc: Dictionary<ObjectClassificationTrainManifestImageData>, val: ObjectClassificationModelImageData) {
+		function convert(acc: Dictionary<ObjectClassificationTrainManifestImageData>, val: ObjectClassificationPrepareTaskImageData) {
 
 			let {
 				id,
-				annotations
+				ignoredAnnotations,
+				trainableAnnotations
 			} = val
 
 			let entry = manifest.data.images.find(entry => entry.id == id)
@@ -497,10 +535,8 @@ export class ObjectClassificationPrepareTask extends ObjectClassificationTrainin
 					filesize,
 					createdAt,
 					updatedAt,
-					annotations: annotations.map(annotation => ({
-						...annotation,
-						label: String(labelsMap[annotation.label.id]),
-					}))
+					ignoredAnnotations: toImageMapIgnoredAnnotations(ignoredAnnotations),
+					trainableAnnotations: toImageMapTrainableAnnotations(trainableAnnotations)
 				}
 			}
 
@@ -511,12 +547,21 @@ export class ObjectClassificationPrepareTask extends ObjectClassificationTrainin
 	}
 
 	/**
-	 * @method getTraintableAnnotations
+	 * @method getTrainableAnnotations
 	 * @since 1.0.0
 	 * @hidden
 	 */
-	private getTraintableAnnotations(annotations: Array<ObjectClassificationModelAnnotationData>) {
+	private getTrainableAnnotations(annotations: Array<ObjectClassificationModelAnnotationData>) {
 		return annotations.filter(entry => this.isTrainableStatus(entry.status))
+	}
+
+	/**
+	 * @method getIgnoredAnnotations
+	 * @since 1.0.0
+	 * @hidden
+	 */
+	private getIgnoredAnnotations(annotations: Array<ObjectClassificationModelAnnotationData>) {
+		return annotations.filter(entry => this.isTrainableStatus(entry.status) == false)
 	}
 
 	/**
@@ -568,4 +613,18 @@ export class ObjectClassificationPrepareTask extends ObjectClassificationTrainin
 
 		return null
 	}
+}
+
+//------------------------------------------------------------------------------
+// Types
+//------------------------------------------------------------------------------
+
+/**
+ * @interface ObjectClassificationPrepareTaskImageData
+ * @since 1.0.0
+ * @hidden
+ */
+interface ObjectClassificationPrepareTaskImageData extends Omit<ObjectClassificationModelImageData, 'annotations'> {
+	ignoredAnnotations: Array<ObjectClassificationModelAnnotationData>
+	trainableAnnotations: Array<ObjectClassificationModelAnnotationData>
 }

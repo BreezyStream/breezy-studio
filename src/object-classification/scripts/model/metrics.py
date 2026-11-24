@@ -17,12 +17,14 @@ THRESHOLD = 0.5
 #
 #   y_true: (N, K) 0/1
 #   y_prob: (N, K) sigmoid probabilities
+#   y_mask: (N, K) 1 when the pair counts, 0 when its label is ignored
 #
 
-def compute_metrics(y_true: np.ndarray, y_prob: np.ndarray) -> Dict[str, float]:
+def compute_metrics(y_true: np.ndarray, y_prob: np.ndarray, y_mask: np.ndarray) -> Dict[str, float]:
 
-    true = y_true.reshape(-1) >= 0.5
-    prob = y_prob.reshape(-1)
+    keep = y_mask.reshape(-1) >= 0.5
+    true = y_true.reshape(-1)[keep] >= 0.5
+    prob = y_prob.reshape(-1)[keep]
     pred = prob >= THRESHOLD
 
     tp = float(np.sum( true &  pred))
@@ -42,7 +44,7 @@ def compute_metrics(y_true: np.ndarray, y_prob: np.ndarray) -> Dict[str, float]:
 # Since: 2.0.0
 #
 
-def compute_class_metrics(y_true: np.ndarray, y_prob: np.ndarray) -> Dict[int, Dict[str, Any]]:
+def compute_class_metrics(y_true: np.ndarray, y_prob: np.ndarray, y_mask: np.ndarray) -> Dict[int, Dict[str, Any]]:
 
     y_pred = y_prob >= THRESHOLD
 
@@ -50,8 +52,9 @@ def compute_class_metrics(y_true: np.ndarray, y_prob: np.ndarray) -> Dict[int, D
 
     for index in range(y_true.shape[1]):
 
-        true = y_true[:, index] >= 0.5
-        pred = y_pred[:, index]
+        keep = y_mask[:, index] >= 0.5
+        true = y_true[keep, index] >= 0.5
+        pred = y_pred[keep, index]
 
         tp = float(np.sum( true &  pred))
         fp = float(np.sum(~true &  pred))
